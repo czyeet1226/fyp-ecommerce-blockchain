@@ -53,7 +53,11 @@ app.get("/api/health", (req, res) => {
     },
     blockchain: {
       status: blockchainService.initialized ? "connected" : "disconnected",
-      rpc: process.env.HARDHAT_RPC_URL || "http://127.0.0.1:8545",
+      network:
+        process.env.HARDHAT_RPC_URL &&
+        !process.env.HARDHAT_RPC_URL.includes("127.0.0.1")
+          ? "remote"
+          : "local",
     },
   });
 });
