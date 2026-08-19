@@ -1,0 +1,21 @@
+{
+  "name": "blockchain-ecommerce",
+  "version": "1.0.0",
+  "description": "Blockchain-integrated e-commerce platform with hybrid payment system and loyalty token rewards (FYP - Chan Zean Yeet TP070394)",
+  "scripts": {
+    "chain": "npx hardhat node",
+    "compile": "npx hardhat compile",
+    "deploy": "npx hardhat run scripts/deploy.js --network localhost",
+    "test": "npx hardhat test",
+    "backend": "cd backend && node server.js",
+    "frontend": "cd frontend && npm start"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "hardhat": "^2.28.6"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.0.0",
+    "ethers": "^6.11.0"
+  }
+}
