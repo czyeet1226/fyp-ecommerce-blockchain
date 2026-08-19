@@ -25,6 +25,15 @@ module.exports = {
       url: "http://127.0.0.1:8545",
       chainId: 31337,
     },
+    ...(process.env.SEPOLIA_RPC_URL && process.env.SEPOLIA_PRIVATE_KEY
+      ? {
+          sepolia: {
+            url: process.env.SEPOLIA_RPC_URL,
+            chainId: 11155111,
+            accounts: [process.env.SEPOLIA_PRIVATE_KEY],
+          },
+        }
+      : {}),
   },
   paths: {
     sources: "./contracts",

@@ -13,12 +13,18 @@
  *   - Writes deployed addresses to deployedAddresses.json (consumed by backend + frontend)
  */
 
-const { ethers } = require("hardhat");
+const hre = require("hardhat");
+const { ethers } = hre;
 const fs = require("fs");
 const path = require("path");
 
 async function main() {
   const [deployer, ...accounts] = await ethers.getSigners();
+  const providerNetwork = await ethers.provider.getNetwork();
+  const chainId = Number(providerNetwork.chainId);
+  const networkName = hre.network.name;
+  const reserveEth =
+    process.env.RESERVE_ETH || (chainId === 31337 ? "5.0" : "0");
 
   console.log("\n========================================================");
   console.log("  Blockchain E-Commerce Platform — Deployment");
@@ -74,13 +80,17 @@ async function main() {
   console.log("✅  PurchaseReceipt.setMinter(escrow) set");
 
   // ── 4. Seed reserve ETH into EcommercePayment ──────────────────────────
-  console.log("\nSeeding 5 ETH reserve into EcommercePayment...");
-  const seedTx = await deployer.sendTransaction({
-    to: ecommerceAddress,
-    value: ethers.parseEther("5.0"),
-  });
-  await seedTx.wait();
-  console.log(`✅  Reserve balance: ${ethers.formatEther(await ethers.provider.getBalance(ecommerceAddress))} ETH`);
+  if (Number(reserveEth) > 0) {
+    console.log(`\nSeeding ${reserveEth} ETH reserve into EcommercePayment...`);
+    const seedTx = await deployer.sendTransaction({
+      to: ecommerceAddress,
+      value: ethers.parseEther(reserveEth),
+    });
+    await seedTx.wait();
+    console.log(`✅  Reserve balance: ${ethers.formatEther(await ethers.provider.getBalance(ecommerceAddress))} ETH`);
+  } else {
+    console.log("\nℹ️  Skipping reserve ETH funding");
+  }
 
   // ── 5. Print Hardhat Accounts ───────────────────────────────────────────
   console.log("\n──────────────────────────────────────────────────────────");
@@ -97,8 +107,8 @@ async function main() {
 
   // ── 6. Write addresses to JSON ──────────────────────────────────────────
   const deployed = {
-    network: "localhost",
-    chainId: 31337,
+    network: networkName,
+    chainId,
     deployedAt: new Date().toISOString(),
     contracts: {
       LoyaltyToken: loyaltyTokenAddress,
