@@ -502,7 +502,7 @@ export const css = {
     display: "grid",
     gap: 12,
     alignSelf: "start",
-    height: 400,
+    height: 286,
     overflow: "hidden",
     flexDirection: "column",
   },

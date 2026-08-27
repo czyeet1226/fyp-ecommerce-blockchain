@@ -21,10 +21,17 @@ export default function ShopPage({
   const [qty, setQty] = useState({}); // productId -> quantity
   const [addedId, setAddedId] = useState(null);
   const [busyId, setBusyId] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const getQty = (id) => qty[id] || 1;
   const setProductQty = (id, v) =>
     setQty((cur) => ({ ...cur, [id]: Math.max(1, v) }));
+
+  // Filter products by search term
+  const filteredProducts = products.filter((p) =>
+    p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (p.description && p.description.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
 
   async function handleAdd(product) {
     if (!addToCart) return;
@@ -51,20 +58,31 @@ export default function ShopPage({
           </button>
         </div>
       ) : (
-        <div style={css.catRow}>
-          {SHOP_CATEGORIES.map((cat) => (
-            <button
-              key={cat.key}
-              style={{
-                ...css.catBtn,
-                ...(selectedCategory === cat.key ? css.catBtnActive : {}),
-              }}
-              onClick={() => setSelectedCategory(cat.key)}
-            >
-              {cat.label}
-            </button>
-          ))}
-        </div>
+        <>
+          <div style={css.searchBarContainer}>
+            <input
+              type="text"
+              placeholder="Search products by name..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={css.searchBarInput}
+            />
+          </div>
+          <div style={css.catRow}>
+            {SHOP_CATEGORIES.map((cat) => (
+              <button
+                key={cat.key}
+                style={{
+                  ...css.catBtn,
+                  ...(selectedCategory === cat.key ? css.catBtnActive : {}),
+                }}
+                onClick={() => setSelectedCategory(cat.key)}
+              >
+                {cat.label}
+              </button>
+            ))}
+          </div>
+        </>
       )}
 
       {productsError && <p style={css.helperText}>{productsError}</p>}
@@ -76,16 +94,23 @@ export default function ShopPage({
         </div>
       ) : (
         <div style={css.productGrid}>
-          {products.map((p) => {
-            const color = categoryColor(p.category);
-            const priceElixir = p.priceMyr
-              ? Math.ceil(parseFloat(p.priceMyr) / ELIXIR_TO_RM_RATE)
-              : Math.ceil(
-                  (parseFloat(p.priceEth) * LIVE_RM_PER_ETH) /
-                    ELIXIR_TO_RM_RATE,
-                );
+          {filteredProducts.length === 0 ? (
+            <div style={css.emptyState}>
+              <p style={css.emptyTitle}>
+                {searchTerm ? "No products found" : "No products available"}
+              </p>
+            </div>
+          ) : (
+            filteredProducts.map((p) => {
+              const color = categoryColor(p.category);
+              const priceElixir = p.priceMyr
+                ? Math.ceil(parseFloat(p.priceMyr) / ELIXIR_TO_RM_RATE)
+                : Math.ceil(
+                    (parseFloat(p.priceEth) * LIVE_RM_PER_ETH) /
+                      ELIXIR_TO_RM_RATE,
+                  );
 
-            const outOfStock = p.stock <= 0;
+              const outOfStock = p.stock <= 0;
 
             return (
               <div
@@ -193,12 +218,13 @@ export default function ShopPage({
                       ? "Added ✓"
                       : busyId === p.id
                       ? "Adding…"
-                      : "🛒 Add to Cart"}
+                      : "Add"}
                   </button>
                 </div>
               </div>
             );
-          })}
+            })
+          )}
         </div>
       )}
     </Section>
@@ -292,7 +318,6 @@ const sellerBanner = {
 
 const sellerLink = {
   btn: {
-    alignSelf: "start",
     padding: 0,
     margin: 0,
     border: "none",
@@ -303,5 +328,7 @@ const sellerLink = {
     fontWeight: 700,
     textDecoration: "underline",
     textUnderlineOffset: 2,
+    textAlign: "left",
+    width: "100%",
   },
 };

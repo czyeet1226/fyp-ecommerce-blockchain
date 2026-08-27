@@ -1,19 +1,19 @@
 export const SECTIONS = [
-  { id: "shop", label: "Shop", icon: "🛍", path: "/shop" },
-  { id: "cart", label: "Cart", icon: "🛒", path: "/cart" },
-  { id: "wallet", label: "Wallet", icon: "💎", path: "/wallet" },
-  { id: "staking", label: "Staking", icon: "📈", path: "/staking" },
-  { id: "track-order", label: "Track Order", icon: "📦", path: "/track-order" },
-  { id: "history", label: "History", icon: "📋", path: "/history" },
-  { id: "profile", label: "Profile", icon: "👤", path: "/profile" },
+  { id: "shop", label: "Shop", path: "/shop" },
+  { id: "cart", label: "Cart", path: "/cart" },
+  { id: "wallet", label: "Wallet", path: "/wallet" },
+  { id: "staking", label: "Staking", path: "/staking" },
+  { id: "track-order", label: "Track Order", path: "/track-order" },
+  { id: "history", label: "History", path: "/history" },
+  { id: "profile", label: "Profile", path: "/profile" },
 ];
 
 export const SHOP_CATEGORIES = [
-  { key: "hot selling", label: "🔥 Hot", emoji: "🔥" },
-  { key: "clothes", label: "👕 Clothes", emoji: "👕" },
-  { key: "toys", label: "🧸 Toys", emoji: "🧸" },
-  { key: "foods", label: "🍱 Foods", emoji: "🍱" },
-  { key: "electronics", label: "💻 Electronics", emoji: "💻" },
+  { key: "hot selling", label: "Hot" },
+  { key: "clothes", label: "Clothes" },
+  { key: "toys", label: "Toys" },
+  { key: "foods", label: "Foods" },
+  { key: "electronics", label: "Electronics" },
 ];
 
 export const ORDER_STEPS = [
