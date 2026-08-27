@@ -67,6 +67,12 @@ export const LIVE_RM_PER_ETH = 12000;
 export const ELIXIR_TO_RM_RATE = 12;
 export const RM_TO_ELIXIR_RATE = 1 / ELIXIR_TO_RM_RATE;
 
+// ── USD reference rates (display only — not wired to a live feed) ──────────
+export const LIVE_USD_PER_ETH = 2600;
+export const LIVE_USD_PER_RM = 0.21;
+export const ETH_USD_CHANGE_24H = 2.4; // demo 24h change %, for display only
+export const RM_USD_CHANGE_24H = -0.15; // demo 24h change %, for display only
+
 // ── Multi-currency swap config (mirrors backend RM_VALUE base) ──────────────
 export const CURRENCIES = [
   { code: "ETH", label: "ETH", icon: "⟠", color: "#7c3aed" },

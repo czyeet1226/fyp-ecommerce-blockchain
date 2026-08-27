@@ -1,11 +1,21 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   CURRENCIES,
   ELIXIR_TO_RM_RATE,
+  ETH_USD_CHANGE_24H,
   LIVE_RM_PER_ETH,
+  LIVE_USD_PER_ETH,
+  LIVE_USD_PER_RM,
   RM_TO_ELIXIR_RATE,
+  RM_USD_CHANGE_24H,
 } from "../dashboard/dashboardData";
 import { BalanceCard, css, Section } from "../dashboard/dashboardUi";
+
+const WALLET_TABS = [
+  { key: "swap", label: "Currency Swap", icon: "💱" },
+  { key: "deposit", label: "Deposit", icon: "📥" },
+  { key: "transfer", label: "Transfer", icon: "📤" },
+];
 
 const CURRENCY_META = {
   ETH: { label: "ETH", icon: "⟠", color: "#7c3aed" },
@@ -69,6 +79,8 @@ export default function WalletPage({
     setSwapAmount("");
   };
 
+  const [activeTab, setActiveTab] = useState("swap");
+
   return (
     <Section label="Wallet" title="Balances, Swap & Transfers">
       <div style={css.balanceGrid}>
@@ -102,119 +114,216 @@ export default function WalletPage({
         />
       </div>
 
-      <div style={css.swapWidget}>
-        <div style={css.swapWidgetHeader}>
-          <h4 style={css.swapTitle}>💱 Currency Swap</h4>
-          <p style={css.swapRate}>
-            1 ETH = RM {LIVE_RM_PER_ETH.toLocaleString()} &nbsp;|&nbsp; 1 ✦ = RM{" "}
-            {ELIXIR_TO_RM_RATE}
-          </p>
-        </div>
-
-        {/* From / To dropdowns */}
-        <div style={s.swapRow}>
-          <div style={s.swapField}>
-            <label style={css.inputLabel}>From</label>
-            <select
-              value={swapFrom}
-              onChange={(e) => handleFromChange(e.target.value)}
-              style={css.selectField}
-            >
-              {CURRENCIES.map((c) => (
-                <option key={c.code} value={c.code}>
-                  {c.icon} {c.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
+      {/* Clean nav bar: Currency Swap / Deposit / Transfer */}
+      <div style={css.walletNavBar}>
+        {WALLET_TABS.map((tab) => (
           <button
-            style={s.flipBtn}
-            onClick={handleFlip}
-            title="Swap direction"
+            key={tab.key}
             type="button"
+            style={{
+              ...css.walletNavBtn,
+              ...(activeTab === tab.key ? css.walletNavBtnActive : {}),
+            }}
+            onClick={() => setActiveTab(tab.key)}
           >
-            ⇄
+            <span>{tab.icon}</span>
+            <span>{tab.label}</span>
           </button>
-
-          <div style={s.swapField}>
-            <label style={css.inputLabel}>To</label>
-            <select
-              value={swapTo}
-              onChange={(e) => handleToChange(e.target.value)}
-              style={css.selectField}
-            >
-              {CURRENCIES.map((c) => (
-                <option key={c.code} value={c.code}>
-                  {c.icon} {c.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <div style={css.swapInputRow}>
-          <div style={css.swapInputGroup}>
-            <label style={css.inputLabel}>
-              {CURRENCY_META[swapFrom]?.label} amount
-            </label>
-            <input
-              type="number"
-              min="0"
-              step={swapFrom === "ETH" ? "0.0001" : swapFrom === "RM" ? "0.01" : "1"}
-              placeholder="0.00"
-              value={swapAmount}
-              onChange={(e) => setSwapAmount(e.target.value)}
-              style={css.inputField}
-            />
-          </div>
-
-          {swapPreview && (
-            <div style={css.swapPreviewBox}>
-              <p style={css.swapPreviewLabel}>You receive</p>
-              <p style={css.swapPreviewValue}>{swapPreview.to}</p>
-            </div>
-          )}
-        </div>
-
-        {ethNeedsWallet && (
-          <div style={s.metamaskHint}>
-            <span>🦊</span>
-            <span>Connect MetaMask to swap ETH.</span>
-            <button style={s.connectInline} onClick={connectMetamask}>
-              Connect
-            </button>
-          </div>
-        )}
-
-        {swapFrom === "ETH" && metamaskConnected && (
-          <p style={s.ethNote}>
-            Swapping ETH will send it from your MetaMask wallet to the platform,
-            reducing your MetaMask balance.
-          </p>
-        )}
-        {swapTo === "ETH" && metamaskConnected && (
-          <p style={s.ethNote}>
-            ETH will be paid out to your connected MetaMask wallet.
-          </p>
-        )}
-
-        <button
-          style={{
-            ...css.swapBtn,
-            opacity: swapBusy || ethNeedsWallet ? 0.6 : 1,
-            cursor: swapBusy || ethNeedsWallet ? "not-allowed" : "pointer",
-          }}
-          onClick={handleSwap}
-          disabled={swapBusy || ethNeedsWallet}
-        >
-          {swapBusy
-            ? "Processing…"
-            : `⇄ Swap${swapPreview ? ` ${swapPreview.from} → ${swapPreview.to}` : ""}`}
-        </button>
+        ))}
       </div>
 
-      <div style={css.walletActionsRow}>
+      {activeTab === "swap" && (
+        <div style={css.swapLayout}>
+          {/* Left: swap feature */}
+          <div style={{ ...css.swapWidget, marginBottom: 0 }}>
+            <div style={css.swapWidgetHeader}>
+              <h4 style={css.swapTitle}>💱 Currency Swap</h4>
+              <p style={css.swapRate}>
+                1 ETH = RM {LIVE_RM_PER_ETH.toLocaleString()} &nbsp;|&nbsp; 1 ✦ = RM{" "}
+                {ELIXIR_TO_RM_RATE}
+              </p>
+            </div>
+
+            {/* From / To dropdowns */}
+            <div style={s.swapRow}>
+              <div style={s.swapField}>
+                <label style={css.inputLabel}>From</label>
+                <select
+                  value={swapFrom}
+                  onChange={(e) => handleFromChange(e.target.value)}
+                  style={css.selectField}
+                >
+                  {CURRENCIES.map((c) => (
+                    <option key={c.code} value={c.code}>
+                      {c.icon} {c.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <button
+                style={s.flipBtn}
+                onClick={handleFlip}
+                title="Swap direction"
+                type="button"
+              >
+                ⇄
+              </button>
+
+              <div style={s.swapField}>
+                <label style={css.inputLabel}>To</label>
+                <select
+                  value={swapTo}
+                  onChange={(e) => handleToChange(e.target.value)}
+                  style={css.selectField}
+                >
+                  {CURRENCIES.map((c) => (
+                    <option key={c.code} value={c.code}>
+                      {c.icon} {c.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div style={css.swapInputRow}>
+              <div style={css.swapInputGroup}>
+                <label style={css.inputLabel}>
+                  {CURRENCY_META[swapFrom]?.label} amount
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step={swapFrom === "ETH" ? "0.0001" : swapFrom === "RM" ? "0.01" : "1"}
+                  placeholder="0.00"
+                  value={swapAmount}
+                  onChange={(e) => setSwapAmount(e.target.value)}
+                  style={css.inputField}
+                />
+              </div>
+
+              {swapPreview && (
+                <div style={css.swapPreviewBox}>
+                  <p style={css.swapPreviewLabel}>You receive</p>
+                  <p style={css.swapPreviewValue}>{swapPreview.to}</p>
+                </div>
+              )}
+            </div>
+
+            {ethNeedsWallet && (
+              <div style={s.metamaskHint}>
+                <span>🦊</span>
+                <span>Connect MetaMask to swap ETH.</span>
+                <button style={s.connectInline} onClick={connectMetamask}>
+                  Connect
+                </button>
+              </div>
+            )}
+
+            {swapFrom === "ETH" && metamaskConnected && (
+              <p style={s.ethNote}>
+                Swapping ETH will send it from your MetaMask wallet to the
+                platform, reducing your MetaMask balance.
+              </p>
+            )}
+            {swapTo === "ETH" && metamaskConnected && (
+              <p style={s.ethNote}>
+                ETH will be paid out to your connected MetaMask wallet.
+              </p>
+            )}
+
+            <button
+              style={{
+                ...css.swapBtn,
+                opacity: swapBusy || ethNeedsWallet ? 0.6 : 1,
+                cursor: swapBusy || ethNeedsWallet ? "not-allowed" : "pointer",
+              }}
+              onClick={handleSwap}
+              disabled={swapBusy || ethNeedsWallet}
+            >
+              {swapBusy
+                ? "Processing…"
+                : `⇄ Swap${swapPreview ? ` ${swapPreview.from} → ${swapPreview.to}` : ""}`}
+            </button>
+          </div>
+
+          {/* Right: ETH/USD and RM/USD performance */}
+          <div style={css.priceTickerPanel}>
+            <p style={css.priceTickerTitle}>Market Performance</p>
+
+            <div style={css.priceTickerRow}>
+              <div style={css.priceTickerLeft}>
+                <div
+                  style={{
+                    ...css.priceTickerIcon,
+                    background: "#7c3aed20",
+                    color: "#7c3aed",
+                  }}
+                >
+                  ⟠
+                </div>
+                <div>
+                  <p style={css.priceTickerPair}>ETH / USD</p>
+                  <p style={css.priceTickerSub}>Ethereum</p>
+                </div>
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <p style={css.priceTickerValue}>
+                  ${LIVE_USD_PER_ETH.toLocaleString()}
+                </p>
+                <p
+                  style={{
+                    ...css.priceTickerChange,
+                    color: ETH_USD_CHANGE_24H >= 0 ? "#34d399" : "#f87171",
+                  }}
+                >
+                  {ETH_USD_CHANGE_24H >= 0 ? "▲" : "▼"}{" "}
+                  {Math.abs(ETH_USD_CHANGE_24H)}% 24h
+                </p>
+              </div>
+            </div>
+
+            <div style={css.priceTickerRow}>
+              <div style={css.priceTickerLeft}>
+                <div
+                  style={{
+                    ...css.priceTickerIcon,
+                    background: "#10b98120",
+                    color: "#10b981",
+                  }}
+                >
+                  RM
+                </div>
+                <div>
+                  <p style={css.priceTickerPair}>RM / USD</p>
+                  <p style={css.priceTickerSub}>Malaysian Ringgit</p>
+                </div>
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <p style={css.priceTickerValue}>
+                  ${LIVE_USD_PER_RM.toFixed(3)}
+                </p>
+                <p
+                  style={{
+                    ...css.priceTickerChange,
+                    color: RM_USD_CHANGE_24H >= 0 ? "#34d399" : "#f87171",
+                  }}
+                >
+                  {RM_USD_CHANGE_24H >= 0 ? "▲" : "▼"}{" "}
+                  {Math.abs(RM_USD_CHANGE_24H)}% 24h
+                </p>
+              </div>
+            </div>
+
+            <p style={s.ethNote}>
+              Reference rates for gauging currency performance. Not connected
+              to a live price feed.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {activeTab === "deposit" && (
         <div style={css.walletActionCard}>
           <h4 style={css.walletActionTitle}>📥 Deposit RM</h4>
           <input
@@ -230,7 +339,9 @@ export default function WalletPage({
             Deposit
           </button>
         </div>
+      )}
 
+      {activeTab === "transfer" && (
         <div style={css.walletActionCard}>
           <h4 style={css.walletActionTitle}>📤 Transfer Funds</h4>
 
@@ -308,7 +419,7 @@ export default function WalletPage({
               : `Transfer ${CURRENCY_META[transferCurrency]?.icon || ""}`}
           </button>
         </div>
-      </div>
+      )}
 
       {walletMessage.text && (
         <div
