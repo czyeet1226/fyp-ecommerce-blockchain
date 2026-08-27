@@ -4,12 +4,14 @@
  */
 
 const express = require("express");
+const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { ethers } = require("ethers");
 const { mysqlDB } = require("../config/database");
 const { authenticate } = require("../middleware/auth");
 const { Op } = require("sequelize");
+const { sendPasswordResetEmail } = require("../config/mailer");
 const {
   User,
   CustomerWallet,
@@ -19,6 +21,25 @@ const {
 const blockchainService = require("../config/blockchain");
 
 const router = express.Router();
+
+// ── Password reset configuration ──────────────────────────────────────────
+
+const RESET_TOKEN_TTL_MINUTES = 30;
+
+/** Hash a raw reset token so only the digest is ever stored. */
+function hashResetToken(rawToken) {
+  return crypto.createHash("sha256").update(rawToken).digest("hex");
+}
+
+/** Where the emailed link points. Set APP_URL in .env for other hosts. */
+function buildResetUrl(rawToken, email) {
+  const base = (process.env.APP_URL || "http://localhost:3000").replace(
+    /\/+$/,
+    "",
+  );
+  const params = new URLSearchParams({ token: rawToken, email });
+  return `${base}/reset-password?${params.toString()}`;
+}
 
 function formatWallet(wallet) {
   if (!wallet) {
@@ -400,6 +421,135 @@ router.post("/login", async (req, res) => {
     });
   } catch (err) {
     console.error("Login error:", err);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+// ── POST /api/auth/forgot-password ────────────────────────────────────────
+//
+// Start a password reset. Emails a one-time link to the account owner.
+//
+// The response is deliberately identical whether or not the email exists, so
+// this endpoint cannot be used to discover which addresses have accounts.
+//
+router.post("/forgot-password", async (req, res) => {
+  // Same body for every outcome — do not leak account existence.
+  const genericResponse = {
+    success: true,
+    message:
+      "If an account exists for that email, a password reset link has been sent.",
+  };
+
+  try {
+    const email = String(req.body.email || "").trim().toLowerCase();
+
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Enter a valid email address" });
+    }
+
+    const user = await User.findOne({ where: { email } });
+
+    // Unknown address, or a deactivated account: stop here but still answer
+    // with the generic message.
+    if (!user || !user.isActive) {
+      return res.json(genericResponse);
+    }
+
+    // 32 random bytes → 64 hex chars. Only the hash is persisted.
+    const rawToken = crypto.randomBytes(32).toString("hex");
+    const expiresAt = new Date(Date.now() + RESET_TOKEN_TTL_MINUTES * 60 * 1000);
+
+    await user.update({
+      resetTokenHash: hashResetToken(rawToken),
+      resetTokenExpiresAt: expiresAt,
+    });
+
+    await sendPasswordResetEmail({
+      to: user.email,
+      name: user.name,
+      resetUrl: buildResetUrl(rawToken, user.email),
+      expiresMinutes: RESET_TOKEN_TTL_MINUTES,
+    });
+
+    return res.json(genericResponse);
+  } catch (err) {
+    console.error("Forgot password error:", err);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+// ── POST /api/auth/reset-password ─────────────────────────────────────────
+//
+// Complete a password reset using the token from the emailed link.
+// The token is single-use: it is cleared as soon as the password changes.
+//
+router.post("/reset-password", async (req, res) => {
+  try {
+    const email = String(req.body.email || "").trim().toLowerCase();
+    const token = String(req.body.token || "").trim();
+    const { newPassword } = req.body;
+
+    if (!email || !token) {
+      return res.status(400).json({
+        success: false,
+        message: "This password reset link is invalid or incomplete",
+      });
+    }
+
+    if (!newPassword || String(newPassword).length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: "New password must be at least 6 characters",
+      });
+    }
+
+    const user = await User.findOne({ where: { email } });
+
+    // One message for every failure mode (wrong email, wrong token, expired,
+    // already used) so nothing can be probed through this endpoint.
+    const invalid = {
+      success: false,
+      code: "INVALID_RESET_TOKEN",
+      message:
+        "This password reset link is invalid or has expired. Please request a new one.",
+    };
+
+    if (!user || !user.resetTokenHash || !user.resetTokenExpiresAt) {
+      return res.status(400).json(invalid);
+    }
+
+    if (user.resetTokenExpiresAt.getTime() < Date.now()) {
+      // Expired: clear it so the row does not keep a stale token around.
+      await user.update({ resetTokenHash: null, resetTokenExpiresAt: null });
+      return res.status(400).json(invalid);
+    }
+
+    // Constant-time compare of the digests.
+    const provided = Buffer.from(hashResetToken(token), "hex");
+    const stored = Buffer.from(user.resetTokenHash, "hex");
+    const matches =
+      provided.length === stored.length &&
+      crypto.timingSafeEqual(provided, stored);
+
+    if (!matches) {
+      return res.status(400).json(invalid);
+    }
+
+    await user.update({
+      passwordHash: await bcrypt.hash(newPassword, 12),
+      // Burn the token — a link works exactly once.
+      resetTokenHash: null,
+      resetTokenExpiresAt: null,
+    });
+
+    return res.json({
+      success: true,
+      message: "Password updated. You can now sign in with your new password.",
+    });
+  } catch (err) {
+    console.error("Reset password error:", err);
     return res.status(500).json({ success: false, message: "Server error" });
   }
 });

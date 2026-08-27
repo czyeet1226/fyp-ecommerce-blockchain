@@ -12,8 +12,11 @@ import { useWeb3 } from "./context/Web3Context";
 import DashboardLayout from "./layouts/DashboardLayout";
 import AdminApp from "./admin/AdminApp";
 import SellerApp from "./seller/SellerApp";
+import HomePage from "./customer/HomePage";
 import LoginPage from "./customer/LoginPage";
 import RegisterPage from "./customer/RegisterPage";
+import ForgotPasswordPage from "./customer/ForgotPasswordPage";
+import ResetPasswordPage from "./customer/ResetPasswordPage";
 import ShopPage from "./customer/ShopPage";
 import CartPage from "./customer/CartPage";
 import WalletPage from "./customer/WalletPage";
@@ -42,12 +45,17 @@ function AppRoutes({ user, liveWallet, logout, dashboard }) {
     navigate("/login", { replace: true });
   };
 
+  // Public (signed-out) routes. "/" is the marketing home page, which is the
+  // entry point into either Sign Up or Login.
   if (!user) {
     return (
       <Routes>
+        <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     );
   }

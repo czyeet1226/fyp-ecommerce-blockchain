@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "railway": {
+      "command": "railway",
+      "args": ["mcp", "proxy"]
+    },
+    "drawio": {
+      "command": "npx",
+      "args": ["-y", "@drawio/mcp"]
+    }
+  }
+}

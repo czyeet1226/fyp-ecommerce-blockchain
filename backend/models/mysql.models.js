@@ -117,6 +117,20 @@ const User = mysqlDB.define(
       allowNull: true,
       comment: "Next monthly billing date for the seller's subscription",
     },
+    // ── Password reset ────────────────────────────────────────────────────
+    // Only the SHA-256 hash of the reset token is stored, so a database leak
+    // does not hand out usable reset links. The raw token exists only in the
+    // email that was sent to the account owner.
+    resetTokenHash: {
+      type: DataTypes.STRING(64),
+      allowNull: true,
+      comment: "SHA-256 hash of the active password reset token",
+    },
+    resetTokenExpiresAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      comment: "Expiry timestamp for the active password reset token",
+    },
   },
   {
     tableName: "users",

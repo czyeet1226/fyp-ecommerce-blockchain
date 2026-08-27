@@ -10,6 +10,7 @@ const cors = require("cors");
 
 const { connectMySQL, connectMongoDB } = require("./config/database");
 const blockchainService = require("./config/blockchain");
+const { initMailer } = require("./config/mailer");
 
 const authRoutes = require("./routes/auth.routes");
 const productRoutes = require("./routes/product.routes");
@@ -26,11 +27,47 @@ const PORT = process.env.PORT || 5000;
 
 // ── Middleware ───────────────────────────────────────────────────────────
 
+// Browsers compare origins exactly, so a trailing slash, a stray path, or a
+// different case in FRONTEND_URL silently breaks every cross-origin request:
+// the preflight still returns 204, but without an Access-Control-Allow-Origin
+// header the browser blocks the follow-up POST. Normalising both sides removes
+// that failure mode. FRONTEND_URL accepts a comma-separated list so preview
+// deployments can be allowed alongside production.
+function normaliseOrigin(value) {
+  if (!value) return null;
+  try {
+    const { protocol, host } = new URL(value.trim());
+    return `${protocol}//${host}`.toLowerCase();
+  } catch {
+    return null;
+  }
+}
+
 const allowedOrigins = [
   "http://localhost:3000",
-  ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
-];
-app.use(cors({ origin: allowedOrigins, credentials: true }));
+  ...(process.env.FRONTEND_URL || "").split(","),
+]
+  .map(normaliseOrigin)
+  .filter(Boolean);
+
+console.log("🌐  Allowed CORS origins:", allowedOrigins.join(", ") || "(none)");
+
+app.use(
+  cors({
+    origin(origin, callback) {
+      // Same-origin/non-browser callers (curl, health checks) send no Origin.
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(normaliseOrigin(origin))) {
+        return callback(null, true);
+      }
+
+      console.warn(`⚠️  Blocked CORS origin: ${origin}`);
+      return callback(null, false);
+    },
+    credentials: true,
+  }),
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -88,6 +125,7 @@ async function start() {
   await connectMySQL(); // Centralised DB
   await connectMongoDB(); // Decentralised DB
   await blockchainService.init(); // Blockchain service
+  initMailer(); // Outbound email (password resets)
 
   app.listen(PORT, () => {
     console.log(`\n🚀  API server running at http://localhost:${PORT}`);
