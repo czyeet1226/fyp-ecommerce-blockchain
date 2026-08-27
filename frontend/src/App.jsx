@@ -29,7 +29,6 @@ import {
   ELIXIR_TO_RM_RATE,
   LIVE_RM_PER_ETH,
   RM_TO_ELIXIR_RATE,
-  SAMPLE_PRODUCTS,
   convertCurrency,
   fmt,
   getOrderStageIndex,
@@ -283,31 +282,25 @@ export default function App() {
         .filter(Boolean);
 
       // When filtering by a specific seller, show exactly what the API returns
-      // (no sample fallback, which would leak other sellers' demo items).
+      // (no fallback).
       if (merchantId) {
         setProducts(apiProds);
         setSelectedProduct(null);
         return;
       }
 
-      const fallback = SAMPLE_PRODUCTS.filter(
-        (p) => category === "hot selling" || p.category === category,
-      );
-      const next = apiProds.length > 0 ? apiProds : fallback;
-      setProducts(next);
-      setSelectedProduct((cur) => cur || next[0] || null);
+      // Show API products; if none, show "no products" UI
+      setProducts(apiProds);
+      setSelectedProduct((cur) => cur || apiProds[0] || null);
     } catch {
       if (merchantId) {
         setProducts([]);
         setProductsError("Unable to load this seller's products.");
         return;
       }
-      const fallback = SAMPLE_PRODUCTS.filter(
-        (p) => category === "hot selling" || p.category === category,
-      );
-      setProducts(fallback);
-      setSelectedProduct((cur) => cur || fallback[0] || null);
-      setProductsError("Using sample catalog while products load.");
+      // On error, show empty state (no fallback)
+      setProducts([]);
+      setProductsError("Unable to load products. Please try again.");
     } finally {
       setProductsLoading(false);
     }

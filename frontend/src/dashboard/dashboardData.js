@@ -16,45 +16,6 @@ export const SHOP_CATEGORIES = [
   { key: "electronics", label: "💻 Electronics", emoji: "💻" },
 ];
 
-export const SAMPLE_PRODUCTS = [
-  {
-    id: "sample-1",
-    name: "Aurora Hoodie",
-    category: "clothes",
-    priceEth: "0.045000",
-    priceMyr: "215.00",
-    description: "Soft everyday hoodie with a clean storefront finish.",
-    stock: 12,
-  },
-  {
-    id: "sample-2",
-    name: "Orbit Speaker",
-    category: "electronics",
-    priceEth: "0.080000",
-    priceMyr: "380.00",
-    description: "Compact speaker for your desk, room, or shop display.",
-    stock: 8,
-  },
-  {
-    id: "sample-3",
-    name: "Mini Racer Set",
-    category: "toys",
-    priceEth: "0.030000",
-    priceMyr: "145.00",
-    description: "Fast-moving toy pack for the customer catalog.",
-    stock: 18,
-  },
-  {
-    id: "sample-4",
-    name: "Snack Box",
-    category: "foods",
-    priceEth: "0.022000",
-    priceMyr: "99.00",
-    description: "Snacks bundle for quick repeat orders.",
-    stock: 25,
-  },
-];
-
 export const ORDER_STEPS = [
   "Order placed",
   "Processing",
