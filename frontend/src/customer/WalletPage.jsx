@@ -519,7 +519,7 @@ export default function WalletPage({
             {savedAccounts.length === 0 ? (
               <div style={css.accountListEmpty}>No saved accounts yet</div>
             ) : (
-              <div style={{ display: "grid", gap: 8 }}>
+              <div style={css.accountListScrollable}>
                 {savedAccounts.map((account) => (
                   <div
                     key={account.id}

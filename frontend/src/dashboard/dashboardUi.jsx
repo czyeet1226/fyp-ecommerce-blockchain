@@ -265,6 +265,26 @@ export const css = {
     color: "#f8fafc",
     borderColor: "rgba(125, 211, 252, 0.4)",
   },
+  searchBarContainer: {
+    marginBottom: 20,
+  },
+  searchBarInput: {
+    width: "100%",
+    padding: "12px 16px",
+    borderRadius: 12,
+    border: "1px solid rgba(148, 163, 184, 0.2)",
+    background: "rgba(15, 23, 42, 0.6)",
+    color: "#e2e8f0",
+    fontSize: 14,
+    fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif",
+    outline: "none",
+    transition: "all 0.15s",
+  },
+  searchBarInputFocus: {
+    borderColor: "rgba(56, 189, 248, 0.5)",
+    background: "rgba(15, 23, 42, 0.9)",
+    boxShadow: "0 0 0 3px rgba(56, 189, 248, 0.1)",
+  },
   productGrid: {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
@@ -482,6 +502,9 @@ export const css = {
     display: "grid",
     gap: 12,
     alignSelf: "start",
+    height: 400,
+    overflow: "hidden",
+    flexDirection: "column",
   },
   accountListHeader: {
     display: "flex",
@@ -510,6 +533,13 @@ export const css = {
     textAlign: "center",
     color: "#475569",
     fontSize: 13,
+  },
+  accountListScrollable: {
+    display: "grid",
+    gap: 8,
+    overflowY: "auto",
+    paddingRight: 8,
+    maxHeight: "100%",
   },
   accountListItem: {
     padding: "12px 14px",
