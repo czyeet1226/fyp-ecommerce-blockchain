@@ -11,7 +11,7 @@ const { ethers } = require("ethers");
 const { mysqlDB } = require("../config/database");
 const { authenticate } = require("../middleware/auth");
 const { Op } = require("sequelize");
-const { sendPasswordResetEmail } = require("../config/mailer");
+const { sendPasswordResetEmail, addAuthorizedRecipient } = require("../config/mailer");
 const {
   User,
   CustomerWallet,
@@ -346,6 +346,13 @@ router.post("/register", async (req, res) => {
     }
 
     await transaction.commit();
+
+    // Best-effort: register the new user as an authorized Mailgun sandbox
+    // recipient so the forgot-password flow works for them. Mailgun still
+    // requires the user to click a one-time confirmation email; this call
+    // only saves us from doing that step manually per account. Never blocks
+    // or fails registration if it doesn't succeed.
+    addAuthorizedRecipient(user.email).catch(() => {});
 
     const token = jwt.sign(
       { id: user.id, role: user.role },

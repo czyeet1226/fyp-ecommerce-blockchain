@@ -89,6 +89,46 @@ async function sendMail({ to, subject, text, html }) {
 }
 
 /**
+ * Register an email as an authorized recipient on the Mailgun sandbox domain.
+ *
+ * Mailgun sandbox domains refuse to send to anyone who hasn't been added
+ * here — this is a Mailgun anti-spam rule, not something we can bypass.
+ * Mailgun still emails the recipient a one-time confirmation link they must
+ * click before mail will actually deliver to them; that step can't be
+ * skipped, but calling this at signup means the user only has to click that
+ * one confirmation instead of us doing this by hand per account.
+ *
+ * Silently no-ops if Mailgun isn't configured, or if the domain isn't a
+ * sandbox domain (real/verified domains don't need this at all).
+ */
+async function addAuthorizedRecipient(email) {
+  if (!mailgunReady) return false;
+  if (!mailgunDomain.includes("sandbox")) return false; // only sandbox domains require this
+
+  try {
+    const url = `https://api.mailgun.net/v5/sandbox/auth_recipients?email=${encodeURIComponent(email)}`;
+    const credentials = Buffer.from(`api:${mailgunApiKey}`).toString("base64");
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { Authorization: `Basic ${credentials}` },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.warn(`✉️  Could not add authorized recipient (${response.status}): ${errorText}`);
+      return false;
+    }
+
+    console.log(`✉️  Mailgun confirmation link sent to ${email} (authorize sandbox recipient)`);
+    return true;
+  } catch (err) {
+    console.warn("✉️  Failed to add authorized recipient:", err.message);
+    return false;
+  }
+}
+
+/**
  * Password reset email. `resetUrl` already carries the one-time token.
  */
 async function sendPasswordResetEmail({ to, name, resetUrl, expiresMinutes }) {
@@ -148,4 +188,9 @@ function escapeHtml(value) {
     .replace(/"/g, "&quot;");
 }
 
-module.exports = { initMailer, sendMail, sendPasswordResetEmail };
+module.exports = {
+  initMailer,
+  sendMail,
+  sendPasswordResetEmail,
+  addAuthorizedRecipient,
+};
