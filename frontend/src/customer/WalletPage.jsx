@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import axios from "axios";
 import {
   CURRENCIES,
   ELIXIR_TO_RM_RATE,
@@ -111,17 +112,11 @@ export default function WalletPage({
 
     try {
       // Query backend to check if user exists by wallet address
-      const res = await fetch(
-        `/api/payment/user-by-address?address=${encodeURIComponent(newWalletAddr)}`
-      );
+      const res = await axios.get("/api/payment/user-by-address", {
+        params: { address: newWalletAddr },
+      });
 
-      if (!res.ok) {
-        setAddError("User not found. Check the wallet address.");
-        setAddingAccount(false);
-        return;
-      }
-
-      const data = await res.json();
+      const data = res.data;
       if (!data.user) {
         setAddError("User not found. Check the wallet address.");
         setAddingAccount(false);
@@ -149,7 +144,11 @@ export default function WalletPage({
       setNewWalletAddr("");
       setShowAddModal(false);
     } catch (err) {
-      setAddError(err.message || "Failed to add account");
+      if (err.response?.status === 404) {
+        setAddError("User not found. Check the wallet address.");
+      } else {
+        setAddError(err.response?.data?.message || err.message || "Failed to add account");
+      }
     } finally {
       setAddingAccount(false);
     }
