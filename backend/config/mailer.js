@@ -4,55 +4,45 @@
  * Outbound email for account flows (currently password resets).
  *
  * Two modes:
- *   1. SMTP configured (SMTP_HOST + SMTP_USER + SMTP_PASS in .env)
- *      → a real email is sent through that SMTP server.
+ *   1. Mailgun HTTP API configured (MAILGUN_API_KEY + MAILGUN_DOMAIN in .env)
+ *      → a real email is sent through Mailgun's REST API (port 443, works on Railway).
  *   2. Not configured (default in local development)
  *      → nothing leaves the machine; the message and reset link are printed
  *        to the server console so the flow can still be tested end to end.
- *
- * Mode 2 exists so the feature works out of the box without shipping
- * credentials in the repo. Set the SMTP_* variables to switch to real email.
  */
 
-const nodemailer = require("nodemailer");
-
-let transporter = null;
-let smtpReady = false;
+let mailgunReady = false;
+let mailgunApiKey = null;
+let mailgunDomain = null;
+let mailgunFrom = null;
 
 function initMailer() {
-  const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS } = process.env;
+  const { MAILGUN_API_KEY, MAILGUN_DOMAIN, MAIL_FROM } = process.env;
 
-  if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS) {
+  if (!MAILGUN_API_KEY || !MAILGUN_DOMAIN) {
     console.log(
-      "ℹ️  SMTP not configured — password reset emails will be logged to the console instead of sent.",
+      "ℹ️  Mailgun not configured — password reset emails will be logged to the console instead of sent.",
     );
-    smtpReady = false;
+    mailgunReady = false;
     return;
   }
 
-  const port = Number(SMTP_PORT) || 587;
-
-  transporter = nodemailer.createTransport({
-    host: SMTP_HOST,
-    port,
-    // 465 is implicit TLS; 587 upgrades via STARTTLS.
-    secure: port === 465,
-    auth: { user: SMTP_USER, pass: SMTP_PASS },
-  });
-
-  smtpReady = true;
-  console.log(`✅  Mailer ready → ${SMTP_HOST}:${port}`);
+  mailgunApiKey = MAILGUN_API_KEY;
+  mailgunDomain = MAILGUN_DOMAIN;
+  mailgunFrom = MAIL_FROM || `"Elixir Commerce" <no-reply@${MAILGUN_DOMAIN}>`;
+  mailgunReady = true;
+  console.log(`✅  Mailer ready → Mailgun HTTP API (${MAILGUN_DOMAIN})`);
 }
 
 /**
- * Send an email. Falls back to a console dump when SMTP is not configured.
- * Never throws: a mail failure must not reveal anything to the caller or
- * break the request that triggered it.
+ * Send an email via Mailgun HTTP API.
+ * Falls back to a console dump when Mailgun is not configured.
+ * Never throws — a mail failure must not break the request that triggered it.
  *
- * @returns {Promise<boolean>} true if handed to an SMTP server
+ * @returns {Promise<boolean>} true if handed to Mailgun successfully
  */
 async function sendMail({ to, subject, text, html }) {
-  if (!smtpReady) {
+  if (!mailgunReady) {
     console.log("\n────────── EMAIL (dev console fallback) ──────────");
     console.log(`To:      ${to}`);
     console.log(`Subject: ${subject}`);
@@ -63,13 +53,34 @@ async function sendMail({ to, subject, text, html }) {
   }
 
   try {
-    await transporter.sendMail({
-      from: process.env.MAIL_FROM || `"Elixir Commerce" <${process.env.SMTP_USER}>`,
-      to,
-      subject,
-      text,
-      html,
+    // Mailgun US region endpoint — change to api.eu.mailgun.net if EU region
+    const url = `https://api.mailgun.net/v3/${mailgunDomain}/messages`;
+
+    const formData = new URLSearchParams();
+    formData.append("from", mailgunFrom);
+    formData.append("to", to);
+    formData.append("subject", subject);
+    formData.append("text", text);
+    if (html) formData.append("html", html);
+
+    const credentials = Buffer.from(`api:${mailgunApiKey}`).toString("base64");
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${credentials}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: formData.toString(),
     });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`✉️  Mailgun error ${response.status}: ${errorText}`);
+      return false;
+    }
+
+    console.log(`✉️  Email sent to ${to}`);
     return true;
   } catch (err) {
     console.error("✉️  Failed to send email:", err.message);
