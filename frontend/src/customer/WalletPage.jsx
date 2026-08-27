@@ -112,7 +112,7 @@ export default function WalletPage({
     try {
       // Query backend to check if user exists by wallet address
       const res = await fetch(
-        `/api/wallet/user-by-address?address=${encodeURIComponent(newWalletAddr)}`
+        `/api/payment/user-by-address?address=${encodeURIComponent(newWalletAddr)}`
       );
 
       if (!res.ok) {
