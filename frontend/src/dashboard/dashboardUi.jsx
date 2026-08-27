@@ -555,7 +555,6 @@ export const css = {
   },
   accountListItemActive: {
     background: "rgba(14, 165, 233, 0.15)",
-    borderColor: "rgba(14, 165, 233, 0.35)",
     boxShadow: "0 0 12px rgba(14,165,233,0.15)",
   },
   accountListItemLeft: {
