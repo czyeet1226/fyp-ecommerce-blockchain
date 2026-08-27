@@ -1327,4 +1327,53 @@ router.get("/transactions", authenticate, async (req, res) => {
   }
 });
 
+// ── GET /api/wallet/user-by-address ────────────────────────────────────────
+//
+// Look up a user by their wallet address (for transfer account list feature).
+// Returns public user info if found: name, userCode, walletAddress.
+//
+router.get("/user-by-address", async (req, res) => {
+  try {
+    const address = String(req.query.address || "").trim();
+
+    if (!address) {
+      return res.status(400).json({
+        success: false,
+        message: "Wallet address is required",
+      });
+    }
+
+    const user = await User.findOne({
+      where: {
+        [require("sequelize").Op.or]: [
+          { walletAddress: address },
+          { metamaskAddress: address },
+        ],
+      },
+      attributes: ["id", "name", "userCode", "walletAddress", "email", "isActive"],
+    });
+
+    if (!user || !user.isActive) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    return res.json({
+      success: true,
+      user: {
+        id: user.id,
+        name: user.name,
+        userCode: user.userCode,
+        walletAddress: user.walletAddress,
+        email: user.email,
+      },
+    });
+  } catch (err) {
+    console.error("User lookup error:", err);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
 module.exports = router;

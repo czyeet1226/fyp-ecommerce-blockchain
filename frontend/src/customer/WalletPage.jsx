@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   CURRENCIES,
   ELIXIR_TO_RM_RATE,
@@ -80,6 +80,88 @@ export default function WalletPage({
   };
 
   const [activeTab, setActiveTab] = useState("swap");
+
+  // Saved transfer accounts (stored in localStorage for persistence)
+  const [savedAccounts, setSavedAccounts] = useState(() => {
+    try {
+      const saved = localStorage.getItem("transferAccounts");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newWalletAddr, setNewWalletAddr] = useState("");
+  const [addingAccount, setAddingAccount] = useState(false);
+  const [addError, setAddError] = useState("");
+
+  // Persist saved accounts to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem("transferAccounts", JSON.stringify(savedAccounts));
+  }, [savedAccounts]);
+
+  const handleAddAccount = async () => {
+    if (!newWalletAddr.trim()) {
+      setAddError("Please enter a wallet address");
+      return;
+    }
+
+    setAddingAccount(true);
+    setAddError("");
+
+    try {
+      // Query backend to check if user exists by wallet address
+      const res = await fetch(
+        `/api/wallet/user-by-address?address=${encodeURIComponent(newWalletAddr)}`
+      );
+
+      if (!res.ok) {
+        setAddError("User not found. Check the wallet address.");
+        setAddingAccount(false);
+        return;
+      }
+
+      const data = await res.json();
+      if (!data.user) {
+        setAddError("User not found. Check the wallet address.");
+        setAddingAccount(false);
+        return;
+      }
+
+      // Add to saved accounts (avoid duplicates)
+      const accountExists = savedAccounts.some(
+        (acc) => acc.walletAddress === newWalletAddr
+      );
+      if (accountExists) {
+        setAddError("This account is already saved.");
+        setAddingAccount(false);
+        return;
+      }
+
+      const newAccount = {
+        id: Date.now(), // simple client-side unique id
+        name: data.user.name || "Unknown",
+        walletAddress: newWalletAddr,
+        userCode: data.user.userCode,
+      };
+
+      setSavedAccounts([...savedAccounts, newAccount]);
+      setNewWalletAddr("");
+      setShowAddModal(false);
+    } catch (err) {
+      setAddError(err.message || "Failed to add account");
+    } finally {
+      setAddingAccount(false);
+    }
+  };
+
+  const handleSelectAccount = (account) => {
+    setTransferAddress(account.walletAddress);
+  };
+
+  const handleRemoveAccount = (id) => {
+    setSavedAccounts(savedAccounts.filter((acc) => acc.id !== id));
+  };
 
   return (
     <Section label="Wallet" title="Balances, Swap & Transfers">
@@ -342,82 +424,197 @@ export default function WalletPage({
       )}
 
       {activeTab === "transfer" && (
-        <div style={css.walletActionCard}>
-          <h4 style={css.walletActionTitle}>📤 Transfer Funds</h4>
+        <div style={css.transferLayout}>
+          {/* Left: Transfer form */}
+          <div style={css.walletActionCard}>
+            <h4 style={css.walletActionTitle}>📤 Transfer Funds</h4>
 
-          <select
-            value={transferCurrency}
-            onChange={(e) => setTransferCurrency(e.target.value)}
-            style={css.selectField}
-          >
-            {CURRENCIES.map((c) => (
-              <option key={c.code} value={c.code}>
-                {c.icon} {c.label}
-              </option>
-            ))}
-          </select>
+            <select
+              value={transferCurrency}
+              onChange={(e) => setTransferCurrency(e.target.value)}
+              style={css.selectField}
+            >
+              {CURRENCIES.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.icon} {c.label}
+                </option>
+              ))}
+            </select>
 
-          <input
-            type="text"
-            placeholder={
-              transferCurrency === "ETH"
-                ? "Recipient MetaMask wallet address"
-                : "Recipient wallet address"
-            }
-            value={transferAddress}
-            onChange={(e) => setTransferAddress(e.target.value)}
-            style={{ ...css.inputField, marginTop: 8 }}
-          />
-          <input
-            type="number"
-            min="0"
-            step={transferCurrency === "ETH" ? "0.0001" : transferCurrency === "RM" ? "0.01" : "1"}
-            placeholder={`${CURRENCY_META[transferCurrency]?.label} amount`}
-            value={transferElixir}
-            onChange={(e) => setTransferElixir(e.target.value)}
-            style={{ ...css.inputField, marginTop: 8 }}
-          />
+            <input
+              type="text"
+              placeholder={
+                transferCurrency === "ETH"
+                  ? "Recipient MetaMask wallet address"
+                  : "Recipient wallet address"
+              }
+              value={transferAddress}
+              onChange={(e) => setTransferAddress(e.target.value)}
+              style={{ ...css.inputField, marginTop: 8 }}
+            />
+            <input
+              type="number"
+              min="0"
+              step={transferCurrency === "ETH" ? "0.0001" : transferCurrency === "RM" ? "0.01" : "1"}
+              placeholder={`${CURRENCY_META[transferCurrency]?.label} amount`}
+              value={transferElixir}
+              onChange={(e) => setTransferElixir(e.target.value)}
+              style={{ ...css.inputField, marginTop: 8 }}
+            />
 
-          {transferEthNeedsWallet && (
-            <div style={{ ...s.metamaskHint, marginTop: 8 }}>
-              <span>🦊</span>
-              <span>Connect MetaMask to transfer ETH.</span>
-              <button style={s.connectInline} onClick={connectMetamask}>
-                Connect
+            {transferEthNeedsWallet && (
+              <div style={{ ...s.metamaskHint, marginTop: 8 }}>
+                <span>🦊</span>
+                <span>Connect MetaMask to transfer ETH.</span>
+                <button style={s.connectInline} onClick={connectMetamask}>
+                  Connect
+                </button>
+              </div>
+            )}
+
+            {transferCurrency === "ETH" && metamaskConnected && (
+              <p style={{ ...s.ethNote, marginTop: 8 }}>
+                ETH is sent directly from your MetaMask wallet to the recipient
+                address on-chain.
+              </p>
+            )}
+
+            <button
+              style={{
+                ...css.actionBtn,
+                marginTop: 8,
+                background:
+                  CURRENCY_META[transferCurrency]?.color === "#10b981"
+                    ? "linear-gradient(135deg, #10b981, #34d399)"
+                    : CURRENCY_META[transferCurrency]?.color === "#7c3aed"
+                    ? "linear-gradient(135deg, #7c3aed, #a78bfa)"
+                    : "linear-gradient(135deg, #0ea5e9, #38bdf8)",
+                opacity: transferBusy || transferEthNeedsWallet ? 0.6 : 1,
+                cursor:
+                  transferBusy || transferEthNeedsWallet
+                    ? "not-allowed"
+                    : "pointer",
+              }}
+              onClick={handleTransfer}
+              disabled={transferBusy || transferEthNeedsWallet}
+            >
+              {transferBusy
+                ? "Processing…"
+                : `Transfer ${CURRENCY_META[transferCurrency]?.icon || ""}`}
+            </button>
+          </div>
+
+          {/* Right: Saved Accounts list */}
+          <div style={css.accountListPanel}>
+            <div style={css.accountListHeader}>
+              <h4 style={css.accountListTitle}>👥 Saved Accounts</h4>
+              <button
+                style={css.addAccountBtn}
+                onClick={() => setShowAddModal(true)}
+                type="button"
+              >
+                + Add
               </button>
             </div>
-          )}
 
-          {transferCurrency === "ETH" && metamaskConnected && (
-            <p style={{ ...s.ethNote, marginTop: 8 }}>
-              ETH is sent directly from your MetaMask wallet to the recipient
-              address on-chain.
-            </p>
-          )}
+            {savedAccounts.length === 0 ? (
+              <div style={css.accountListEmpty}>No saved accounts yet</div>
+            ) : (
+              <div style={{ display: "grid", gap: 8 }}>
+                {savedAccounts.map((account) => (
+                  <div
+                    key={account.id}
+                    style={{
+                      ...css.accountListItem,
+                      ...(transferAddress === account.walletAddress
+                        ? css.accountListItemActive
+                        : {}),
+                    }}
+                    onClick={() => handleSelectAccount(account)}
+                  >
+                    <div style={css.accountListItemLeft}>
+                      <div style={css.accountListItemAvatar}>
+                        {account.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div style={css.accountListItemInfo}>
+                        <p style={css.accountListItemName}>{account.name}</p>
+                        <p style={css.accountListItemAddr}>
+                          {account.walletAddress.slice(0, 8)}…
+                          {account.walletAddress.slice(-6)}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      style={css.accountListItemRemove}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRemoveAccount(account.id);
+                      }}
+                      type="button"
+                      title="Remove"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
-          <button
-            style={{
-              ...css.actionBtn,
-              marginTop: 8,
-              background:
-                CURRENCY_META[transferCurrency]?.color === "#10b981"
-                  ? "linear-gradient(135deg, #10b981, #34d399)"
-                  : CURRENCY_META[transferCurrency]?.color === "#7c3aed"
-                  ? "linear-gradient(135deg, #7c3aed, #a78bfa)"
-                  : "linear-gradient(135deg, #0ea5e9, #38bdf8)",
-              opacity: transferBusy || transferEthNeedsWallet ? 0.6 : 1,
-              cursor:
-                transferBusy || transferEthNeedsWallet
-                  ? "not-allowed"
-                  : "pointer",
-            }}
-            onClick={handleTransfer}
-            disabled={transferBusy || transferEthNeedsWallet}
+      {/* Add Account Modal */}
+      {showAddModal && (
+        <div style={css.addAccountModal} onClick={() => setShowAddModal(false)}>
+          <div
+            style={css.addAccountModalContent}
+            onClick={(e) => e.stopPropagation()}
           >
-            {transferBusy
-              ? "Processing…"
-              : `Transfer ${CURRENCY_META[transferCurrency]?.icon || ""}`}
-          </button>
+            <h3 style={css.modalTitle}>Add Account</h3>
+
+            <input
+              type="text"
+              placeholder="Enter wallet address"
+              value={newWalletAddr}
+              onChange={(e) => setNewWalletAddr(e.target.value)}
+              style={css.modalInput}
+              autoFocus
+            />
+
+            {addError && (
+              <p style={{ margin: 0, fontSize: 13, color: "#f87171" }}>
+                ⚠ {addError}
+              </p>
+            )}
+
+            <div style={css.modalActions}>
+              <button
+                style={{ ...css.modalBtn, ...css.modalBtnSecondary }}
+                onClick={() => {
+                  setShowAddModal(false);
+                  setNewWalletAddr("");
+                  setAddError("");
+                }}
+                type="button"
+                disabled={addingAccount}
+              >
+                Cancel
+              </button>
+              <button
+                style={{
+                  ...css.modalBtn,
+                  ...css.modalBtnPrimary,
+                  opacity: addingAccount ? 0.6 : 1,
+                  cursor: addingAccount ? "not-allowed" : "pointer",
+                }}
+                onClick={handleAddAccount}
+                type="button"
+                disabled={addingAccount}
+              >
+                {addingAccount ? "Adding…" : "Add Account"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
