@@ -359,6 +359,7 @@ const s = {
 
   sellerBand: {
     maxWidth: 1120,
+    width: "calc(100% - 48px)",
     margin: "60px auto 0",
     padding: "28px 26px",
     borderRadius: 20,
@@ -368,10 +369,10 @@ const s = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
+    flexDirection: "column",
+    textAlign: "center",
     gap: 20,
     flexWrap: "wrap",
-    marginLeft: 24,
-    marginRight: 24,
   },
 
   foot: {
