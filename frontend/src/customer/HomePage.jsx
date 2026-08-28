@@ -117,12 +117,13 @@ export default function HomePage() {
       {/* ── Seller call to action ──────────────────────────────────────── */}
       <section style={s.sellerBand}>
         <div>
-          <h2 style={{ ...s.sectionTitle, textAlign: "left", margin: "0 0 8px" }}>
+          <h2 style={{ ...s.sectionTitle, margin: "0 0 8px" }}>
             Selling instead?
           </h2>
-          <p style={{ ...s.featureText, maxWidth: 520 }}>
-            List products, track fulfillment, and get paid in ETH straight to
-            your own MetaMask wallet. Plans start at 0.01 ETH per month.
+          <p style={{ ...s.featureText, maxWidth: 460, margin: "0 auto" }}>
+            List products, track fulfillment, and get paid in ETH
+            straight to your own MetaMask wallet. Plans start at 0.01
+            ETH per month.
           </p>
         </div>
         <Link to="/register" style={s.ctaPrimary}>
