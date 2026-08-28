@@ -117,7 +117,7 @@ export default function HomePage() {
       {/* ── Seller call to action ──────────────────────────────────────── */}
       <section style={s.sellerBand}>
         <div>
-          <h2 style={{ ...s.sectionTitle, textAlign: "center", margin: "0 0 8px" }}>
+          <h2 style={{ ...s.sectionTitle, textAlign: "left", margin: "0 0 8px" }}>
             Selling instead?
           </h2>
           <p style={{ ...s.featureText, maxWidth: 520 }}>
@@ -368,8 +368,6 @@ const s = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    flexDirection: "column",
-    textAlign: "center",
     gap: 20,
     flexWrap: "wrap",
     marginLeft: 24,
