@@ -178,7 +178,7 @@ export default function ShopPage({
                   <div style={css.priceTag}>
                     <span style={css.priceTagLabel}>RM</span>
                     <strong style={{ ...css.priceTagValue, color: "#34d399" }}>
-                      RM{" "}
+                      {" "}
                       {p.priceMyr ||
                         (parseFloat(p.priceEth) * LIVE_RM_PER_ETH).toFixed(2)}
                     </strong>
