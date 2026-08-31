@@ -13,10 +13,10 @@ import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 
 const NAV = [
-  { id: "users", label: "Users", icon: "👥" },
-  { id: "staking", label: "Staking", icon: "📈" },
-  { id: "revenue", label: "Revenue", icon: "💰" },
-  { id: "disputes", label: "Disputes", icon: "⚖" },
+  { id: "users", label: "Users" },
+  { id: "staking", label: "Staking" },
+  { id: "revenue", label: "Revenue" },
+  { id: "disputes", label: "Disputes" },
 ];
 
 const fmt = (v, d = 2) => {
@@ -85,7 +85,6 @@ export default function AdminApp({ user, logout }) {
       {/* Sidebar */}
       <aside style={s.sidebar}>
         <div style={s.brandBlock}>
-          <div style={s.brandMark}>⚙</div>
           <div>
             <p style={s.brandKicker}>Admin Console</p>
             <h1 style={s.brandTitle}>Elixir Commerce</h1>
@@ -99,7 +98,7 @@ export default function AdminApp({ user, logout }) {
               style={{ ...s.navItem, ...(view === n.id ? s.navItemActive : {}) }}
               onClick={() => setView(n.id)}
             >
-              <span style={s.navIcon}>{n.icon}</span> {n.label}
+              {n.label}
             </button>
           ))}
         </nav>
@@ -107,11 +106,11 @@ export default function AdminApp({ user, logout }) {
         <div style={s.treasuryCard}>
           <p style={s.treasuryLabel}>Platform Treasury</p>
           <div style={s.treasuryRow}>
-            <span>⟠ ETH</span>
+            <span>ETH</span>
             <strong>{fmt(balance.ethBalance, 4)}</strong>
           </div>
           <div style={s.treasuryRow}>
-            <span>✦ Elixir</span>
+            <span>Elixir</span>
             <strong>{fmt(balance.elixirBalance, 0)}</strong>
           </div>
           <div style={s.treasuryStatus}>
@@ -126,7 +125,7 @@ export default function AdminApp({ user, logout }) {
         </div>
 
         <button style={s.logoutBtn} onClick={logout}>
-          ⎋ Sign Out
+          Sign Out
         </button>
       </aside>
 

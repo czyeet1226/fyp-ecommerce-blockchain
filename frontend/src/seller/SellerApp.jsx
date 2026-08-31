@@ -17,10 +17,10 @@ import { useWeb3 } from "../context/Web3Context";
 const CATEGORIES = ["hot selling", "clothes", "toys", "foods", "electronics"];
 
 const NAV = [
-  { id: "create", label: "Create Product", icon: "🧺" },
-  { id: "orders", label: "Track Purchase Order", icon: "📦" },
-  { id: "revenue", label: "Revenue", icon: "💰" },
-  { id: "payments", label: "Payments", icon: "💳" },
+  { id: "create", label: "Create Product" },
+  { id: "orders", label: "Track Purchase Order" },
+  { id: "revenue", label: "Revenue" },
+  { id: "payments", label: "Payments" },
 ];
 
 const PLAN_COLOR = {
@@ -326,7 +326,6 @@ export default function SellerApp({ user, logout }) {
       {/* Sidebar */}
       <aside style={s.sidebar}>
         <div style={s.brandBlock}>
-          <div style={s.brandMark}>🏪</div>
           <div>
             <p style={s.brandKicker}>Seller Portal</p>
             <h1 style={s.brandTitle}>Elixir Commerce</h1>
@@ -342,7 +341,6 @@ export default function SellerApp({ user, logout }) {
                 style={{ ...s.navItem, ...(active ? s.navItemActive : {}) }}
                 onClick={() => setView(n.id)}
               >
-                <span style={s.navIcon}>{n.icon}</span>
                 {n.label}
               </button>
             );
@@ -386,13 +384,13 @@ export default function SellerApp({ user, logout }) {
               onClick={connectWallet}
               disabled={connecting}
             >
-              🦊 {connecting ? "Connecting…" : "Connect MetaMask"}
+              {connecting ? "Connecting…" : "Connect MetaMask"}
             </button>
           )}
         </div>
 
         <button style={s.logoutBtn} onClick={logout}>
-          ⎋ Sign Out
+          Sign Out
         </button>
       </aside>
 
