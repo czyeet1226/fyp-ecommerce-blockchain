@@ -13,9 +13,9 @@ import {
 import { BalanceCard, css, Section } from "../dashboard/dashboardUi";
 
 const WALLET_TABS = [
-  { key: "swap", label: "Currency Swap", icon: "💱" },
-  { key: "deposit", label: "Deposit", icon: "📥" },
-  { key: "transfer", label: "Transfer", icon: "📤" },
+  { key: "swap", label: "Currency Swap"},
+  { key: "deposit", label: "Deposit"},
+  { key: "transfer", label: "Transfer"},
 ];
 
 const CURRENCY_META = {
@@ -218,7 +218,7 @@ export default function WalletPage({
           {/* Left: swap feature */}
           <div style={{ ...css.swapWidget, marginBottom: 0 }}>
             <div style={css.swapWidgetHeader}>
-              <h4 style={css.swapTitle}>💱 Currency Swap</h4>
+              <h4 style={css.swapTitle}>Currency Swap</h4>
               <p style={css.swapRate}>
                 1 ETH = RM {LIVE_RM_PER_ETH.toLocaleString()} &nbsp;|&nbsp; 1 ✦ = RM{" "}
                 {ELIXIR_TO_RM_RATE}
@@ -406,7 +406,7 @@ export default function WalletPage({
 
       {activeTab === "deposit" && (
         <div style={css.walletActionCard}>
-          <h4 style={css.walletActionTitle}>📥 Deposit RM</h4>
+          <h4 style={css.walletActionTitle}>Deposit RM</h4>
           <input
             type="number"
             min="0"
@@ -426,7 +426,7 @@ export default function WalletPage({
         <div style={css.transferLayout}>
           {/* Left: Transfer form */}
           <div style={css.walletActionCard}>
-            <h4 style={css.walletActionTitle}>📤 Transfer Funds</h4>
+            <h4 style={css.walletActionTitle}>Transfer Funds</h4>
 
             <select
               value={transferCurrency}
