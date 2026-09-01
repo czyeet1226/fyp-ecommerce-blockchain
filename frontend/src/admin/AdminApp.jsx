@@ -918,28 +918,28 @@ function TransactionsView() {
             }
           />
         ) : (
-          <div style={s.tableWrap}>
+          <div style={s.tableScrollContainer}>
             <table style={s.table}>
               <thead>
                 <tr>
-                  <th style={s.th}>User</th>
-                  <th style={s.th}>Type</th>
-                  <th style={s.th}>From</th>
-                  <th style={s.thRight}>Amount</th>
-                  <th style={s.th}>To</th>
-                  <th style={s.thRight}>Amount</th>
-                  <th style={s.th}>Status</th>
-                  <th style={s.th}>Date</th>
-                  <th style={s.th}>Tx Hash</th>
+                  <th style={s.thFixed}>User</th>
+                  <th style={s.thFixed}>Type</th>
+                  <th style={s.thFixed}>From</th>
+                  <th style={s.thFlex}>Amount</th>
+                  <th style={s.thFixed}>To</th>
+                  <th style={s.thFlex}>Amount</th>
+                  <th style={s.thFixed}>Status</th>
+                  <th style={s.thFixed}>Date</th>
+                  <th style={s.thFixed}>Tx Hash</th>
                 </tr>
               </thead>
               <tbody>
                 {transactions.map((tx) => (
                   <tr key={tx.id} style={s.tr}>
-                    <td style={s.td}>
+                    <td style={s.tdFixed}>
                       <span style={s.code}>{tx.userCode || "—"}</span>
                     </td>
-                    <td style={s.td}>
+                    <td style={s.tdFixed}>
                       <span
                         style={{
                           ...s.badge,
@@ -951,27 +951,27 @@ function TransactionsView() {
                         {tx.type.replace(/_/g, " ")}
                       </span>
                     </td>
-                    <td style={s.td}>
+                    <td style={s.tdFixed}>
                       {tx.fromCurrency ? (
                         <span style={s.tdMono}>{tx.fromCurrency}</span>
                       ) : (
                         "—"
                       )}
                     </td>
-                    <td style={s.tdRight}>
+                    <td style={s.tdFlex}>
                       {tx.fromAmount != null ? fmt(tx.fromAmount, 4) : "—"}
                     </td>
-                    <td style={s.td}>
+                    <td style={s.tdFixed}>
                       {tx.toCurrency ? (
                         <span style={s.tdMono}>{tx.toCurrency}</span>
                       ) : (
                         "—"
                       )}
                     </td>
-                    <td style={s.tdRight}>
+                    <td style={s.tdFlex}>
                       {tx.toAmount != null ? fmt(tx.toAmount, 4) : "—"}
                     </td>
-                    <td style={s.td}>
+                    <td style={s.tdFixed}>
                       <span
                         style={{
                           ...s.badge,
@@ -983,20 +983,20 @@ function TransactionsView() {
                         {tx.status}
                       </span>
                     </td>
-                    <td style={s.tdMuted}>
+                    <td style={s.tdFixed}>
                       {new Date(tx.createdAt).toLocaleDateString()}
                     </td>
-                    <td style={s.tdMono}>
+                    <td style={s.tdFixed}>
                       {tx.txHash ? shortAddr(tx.txHash) : "—"}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            <p style={s.tableFoot}>
-              {transactions.length} transaction(s) shown
-            </p>
           </div>
+          <p style={s.tableFoot}>
+            {transactions.length} transaction(s) shown
+          </p>
         )}
       </section>
     </>
@@ -1095,12 +1095,69 @@ const s = {
   searchInput: { flex: 1, border: "none", background: "transparent", color: "#e2e8f0", fontSize: 14, outline: "none", fontFamily: "inherit" },
   filterSelect: { padding: "10px 14px", borderRadius: 12, border: "1px solid rgba(148,163,184,0.15)", background: "rgba(15,23,42,0.8)", color: "#e2e8f0", fontSize: 14, cursor: "pointer", fontFamily: "inherit", outline: "none", width: "100%" },
   refreshBtn: { padding: "9px 14px", borderRadius: 12, border: "1px solid rgba(251,191,36,0.25)", background: "rgba(251,191,36,0.1)", color: "#fbbf24", cursor: "pointer", fontWeight: 700, fontSize: 13 },
+  tableScrollContainer: {
+    overflowX: "auto",
+    overflowY: "auto",
+    maxHeight: "600px",
+    border: "1px solid rgba(148,163,184,0.12)",
+    borderRadius: 12,
+    marginBottom: 12,
+  },
   tableWrap: { overflowX: "auto" },
-  table: { width: "100%", borderCollapse: "collapse", fontSize: 13 },
-  th: { textAlign: "left", padding: "10px 12px", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8, color: "#475569", borderBottom: "1px solid rgba(148,163,184,0.12)" },
+  table: { width: "100%", borderCollapse: "collapse", fontSize: 13, minWidth: "1200px" },
+  th: { textAlign: "left", padding: "10px 12px", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8, color: "#475569", borderBottom: "1px solid rgba(148,163,184,0.12)", position: "sticky", top: 0, background: "#0a1628", zIndex: 10 },
+  thFixed: { 
+    textAlign: "left", 
+    padding: "10px 12px", 
+    fontSize: 10, 
+    fontWeight: 700, 
+    textTransform: "uppercase", 
+    letterSpacing: 0.8, 
+    color: "#475569", 
+    borderBottom: "1px solid rgba(148,163,184,0.12)", 
+    position: "sticky", 
+    top: 0, 
+    background: "#0a1628", 
+    zIndex: 10,
+    width: "120px",
+    minWidth: "120px",
+    maxWidth: "120px",
+  },
+  thFlex: { 
+    textAlign: "right", 
+    padding: "10px 12px", 
+    fontSize: 10, 
+    fontWeight: 700, 
+    textTransform: "uppercase", 
+    letterSpacing: 0.8, 
+    color: "#475569", 
+    borderBottom: "1px solid rgba(148,163,184,0.12)", 
+    position: "sticky", 
+    top: 0, 
+    background: "#0a1628", 
+    zIndex: 10,
+    minWidth: "100px",
+  },
   thRight: { textAlign: "right", padding: "10px 12px", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8, color: "#475569", borderBottom: "1px solid rgba(148,163,184,0.12)" },
   tr: { borderBottom: "1px solid rgba(148,163,184,0.06)" },
   td: { padding: "12px", color: "#e2e8f0" },
+  tdFixed: { 
+    padding: "12px", 
+    color: "#e2e8f0",
+    width: "120px",
+    minWidth: "120px",
+    maxWidth: "120px",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+  },
+  tdFlex: { 
+    padding: "12px", 
+    color: "#e2e8f0",
+    textAlign: "right",
+    minWidth: "100px",
+    wordBreak: "break-word",
+  },
   tdMuted: { padding: "12px", color: "#94a3b8" },
   tdMono: { padding: "12px", color: "#7dd3fc", fontFamily: "'Fira Code', 'Consolas', monospace", fontSize: 12 },
   tdRight: { padding: "12px", textAlign: "right", color: "#cbd5e1", fontWeight: 600 },
