@@ -17,6 +17,7 @@ const NAV = [
   { id: "staking", label: "Staking" },
   { id: "revenue", label: "Revenue" },
   { id: "disputes", label: "Disputes" },
+  { id: "transactions", label: "Transactions" },
 ];
 
 const fmt = (v, d = 2) => {
@@ -180,6 +181,7 @@ export default function AdminApp({ user, logout }) {
         {view === "staking" && <StakingView showMsg={showMsg} />}
         {view === "revenue" && <RevenueView />}
         {view === "disputes" && <DisputesView showMsg={showMsg} />}
+        {view === "transactions" && <TransactionsView />}
       </main>
     </div>
   );
@@ -766,6 +768,241 @@ function DisputesView({ showMsg }) {
   );
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// Transactions view — all wallet transactions across the platform
+// ═══════════════════════════════════════════════════════════════════════════
+
+function TransactionsView() {
+  const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState("");
+  const [debounced, setDebounced] = useState("");
+  const [typeFilter, setTypeFilter] = useState("ALL");
+  const [statusFilter, setStatusFilter] = useState("ALL");
+
+  const TRANSACTION_TYPES = ["ALL", "SWAP", "TRANSFER_OUT", "TRANSFER_IN", "DEPOSIT", "STAKE", "UNSTAKE"];
+  const STATUS_TYPES = ["ALL", "pending", "completed", "failed"];
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(search.trim()), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  useEffect(() => {
+    loadTransactions();
+  }, [debounced, typeFilter, statusFilter]);
+
+  async function loadTransactions() {
+    setLoading(true);
+    try {
+      const params = {};
+      if (debounced) params.search = debounced;
+      if (typeFilter !== "ALL") params.type = typeFilter;
+      if (statusFilter !== "ALL") params.status = statusFilter;
+
+      const res = await axios.get("/api/admin/transactions", { params });
+      setTransactions(res.data.transactions || []);
+    } catch {
+      setTransactions([]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const typeColor = (type) => {
+    if (type === "SWAP") return "#0ea5e9";
+    if (type === "STAKE" || type === "UNSTAKE") return "#8b5cf6";
+    if (type === "DEPOSIT") return "#10b981";
+    return "#f59e0b";
+  };
+
+  const statusColor = (status) => {
+    if (status === "completed") return "#10b981";
+    if (status === "failed") return "#f87171";
+    return "#f59e0b";
+  };
+
+  return (
+    <>
+      <div style={s.cardGrid}>
+        <Tile
+          icon="💸"
+          label="Total Transactions"
+          value={fmt(transactions.length, 0)}
+          sub="All platform activity"
+          color="#0ea5e9"
+        />
+        <Tile
+          icon="✅"
+          label="Completed"
+          value={fmt(transactions.filter(t => t.status === "completed").length, 0)}
+          sub="Successful txns"
+          color="#10b981"
+        />
+        <Tile
+          icon="⏳"
+          label="Pending"
+          value={fmt(transactions.filter(t => t.status === "pending").length, 0)}
+          sub="In progress"
+          color="#f59e0b"
+        />
+      </div>
+
+      <section style={s.sectionCard}>
+        <div style={s.sectionHead}>
+          <div>
+            <p style={s.sectionLabel}>Platform Activity</p>
+            <h3 style={s.sectionTitle}>All Wallet Transactions</h3>
+          </div>
+          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+            <div style={s.searchWrap}>
+              <span style={s.searchIcon}>🔍</span>
+              <input
+                style={s.searchInput}
+                placeholder="Search user code, wallet, or tx hash…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <button style={s.refreshBtn} onClick={loadTransactions}>
+              ↻ Refresh
+            </button>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>
+          <div style={{ flex: 1 }}>
+            <label style={{ ...s.muted, fontSize: 12, display: "block", marginBottom: 6 }}>
+              Transaction Type
+            </label>
+            <select
+              style={s.filterSelect}
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+            >
+              {TRANSACTION_TYPES.map((type) => (
+                <option key={type} value={type}>
+                  {type === "ALL" ? "All Types" : type.replace(/_/g, " ")}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div style={{ flex: 1 }}>
+            <label style={{ ...s.muted, fontSize: 12, display: "block", marginBottom: 6 }}>
+              Status
+            </label>
+            <select
+              style={s.filterSelect}
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              {STATUS_TYPES.map((status) => (
+                <option key={status} value={status}>
+                  {status === "ALL" ? "All Status" : status.charAt(0).toUpperCase() + status.slice(1)}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {loading ? (
+          <Loading label="Loading transactions…" />
+        ) : transactions.length === 0 ? (
+          <Empty
+            icon="📭"
+            title="No transactions found"
+            text={
+              debounced || typeFilter !== "ALL" || statusFilter !== "ALL"
+                ? "Try adjusting your search or filters."
+                : "No wallet transactions recorded yet."
+            }
+          />
+        ) : (
+          <div style={s.tableWrap}>
+            <table style={s.table}>
+              <thead>
+                <tr>
+                  <th style={s.th}>User</th>
+                  <th style={s.th}>Type</th>
+                  <th style={s.th}>From</th>
+                  <th style={s.thRight}>Amount</th>
+                  <th style={s.th}>To</th>
+                  <th style={s.thRight}>Amount</th>
+                  <th style={s.th}>Status</th>
+                  <th style={s.th}>Date</th>
+                  <th style={s.th}>Tx Hash</th>
+                </tr>
+              </thead>
+              <tbody>
+                {transactions.map((tx) => (
+                  <tr key={tx.id} style={s.tr}>
+                    <td style={s.td}>
+                      <span style={s.code}>{tx.userCode || "—"}</span>
+                    </td>
+                    <td style={s.td}>
+                      <span
+                        style={{
+                          ...s.badge,
+                          color: typeColor(tx.type),
+                          borderColor: `${typeColor(tx.type)}44`,
+                          background: `${typeColor(tx.type)}14`,
+                        }}
+                      >
+                        {tx.type.replace(/_/g, " ")}
+                      </span>
+                    </td>
+                    <td style={s.td}>
+                      {tx.fromCurrency ? (
+                        <span style={s.tdMono}>{tx.fromCurrency}</span>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
+                    <td style={s.tdRight}>
+                      {tx.fromAmount != null ? fmt(tx.fromAmount, 4) : "—"}
+                    </td>
+                    <td style={s.td}>
+                      {tx.toCurrency ? (
+                        <span style={s.tdMono}>{tx.toCurrency}</span>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
+                    <td style={s.tdRight}>
+                      {tx.toAmount != null ? fmt(tx.toAmount, 4) : "—"}
+                    </td>
+                    <td style={s.td}>
+                      <span
+                        style={{
+                          ...s.badge,
+                          color: statusColor(tx.status),
+                          borderColor: `${statusColor(tx.status)}44`,
+                          background: `${statusColor(tx.status)}14`,
+                        }}
+                      >
+                        {tx.status}
+                      </span>
+                    </td>
+                    <td style={s.tdMuted}>
+                      {new Date(tx.createdAt).toLocaleDateString()}
+                    </td>
+                    <td style={s.tdMono}>
+                      {tx.txHash ? shortAddr(tx.txHash) : "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p style={s.tableFoot}>
+              {transactions.length} transaction(s) shown
+            </p>
+          </div>
+        )}
+      </section>
+    </>
+  );
+}
+
 // ── Shared small components ─────────────────────────────────────────────────
 
 function Tile({ icon, label, value, sub, color }) {
@@ -856,6 +1093,7 @@ const s = {
   searchWrap: { display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", borderRadius: 12, border: "1px solid rgba(148,163,184,0.15)", background: "rgba(15,23,42,0.8)", minWidth: 280 },
   searchIcon: { fontSize: 14, color: "#64748b" },
   searchInput: { flex: 1, border: "none", background: "transparent", color: "#e2e8f0", fontSize: 14, outline: "none", fontFamily: "inherit" },
+  filterSelect: { padding: "10px 14px", borderRadius: 12, border: "1px solid rgba(148,163,184,0.15)", background: "rgba(15,23,42,0.8)", color: "#e2e8f0", fontSize: 14, cursor: "pointer", fontFamily: "inherit", outline: "none", width: "100%" },
   refreshBtn: { padding: "9px 14px", borderRadius: 12, border: "1px solid rgba(251,191,36,0.25)", background: "rgba(251,191,36,0.1)", color: "#fbbf24", cursor: "pointer", fontWeight: 700, fontSize: 13 },
   tableWrap: { overflowX: "auto" },
   table: { width: "100%", borderCollapse: "collapse", fontSize: 13 },
