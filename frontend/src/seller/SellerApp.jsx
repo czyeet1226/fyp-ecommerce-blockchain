@@ -389,6 +389,18 @@ export default function SellerApp({ user, logout }) {
           )}
         </div>
 
+        {payoutAddress && (
+          <a
+            href={`https://sepolia.etherscan.io/address/${payoutAddress}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={s.etherscanBtn}
+            title="View your transactions on Etherscan"
+          >
+            🔍 Explore Etherscan
+          </a>
+        )}
+
         <button style={s.logoutBtn} onClick={logout}>
           Sign Out
         </button>
@@ -1341,6 +1353,21 @@ const s = {
     fontSize: 13,
     whiteSpace: "nowrap",
     flexShrink: 0,
+  },
+  etherscanBtn: {
+    padding: "11px 14px",
+    borderRadius: 12,
+    border: "1px solid rgba(56,189,248,0.25)",
+    background: "rgba(56,189,248,0.1)",
+    color: "#38bdf8",
+    cursor: "pointer",
+    fontWeight: 700,
+    fontSize: 13,
+    textDecoration: "none",
+    display: "block",
+    textAlign: "center",
+    marginBottom: 10,
+    transition: "all 0.2s",
   },
   logoutBtn: {
     padding: "11px 14px",

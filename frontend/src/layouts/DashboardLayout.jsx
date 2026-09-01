@@ -155,6 +155,18 @@ export default function DashboardLayout({
           />
         </div>
 
+        {user?.walletAddress && (
+          <a
+            href={`https://sepolia.etherscan.io/address/${user.walletAddress}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={css.etherscanBtn}
+            title="View your transactions on Etherscan"
+          >
+            🔍 Explore Etherscan
+          </a>
+        )}
+
         <button style={css.logoutBtn} onClick={logout}>
           ⎋ Sign Out
         </button>
