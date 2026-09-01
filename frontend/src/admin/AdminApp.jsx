@@ -196,6 +196,7 @@ function UsersView({ balance, overview }) {
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [debounced, setDebounced] = useState("");
+  const [copiedAddr, setCopiedAddr] = useState(null);
 
   useEffect(() => {
     const t = setTimeout(() => setDebounced(search.trim()), 300);
@@ -218,6 +219,12 @@ function UsersView({ balance, overview }) {
     } finally {
       setLoading(false);
     }
+  }
+
+  function copyToClipboard(address) {
+    navigator.clipboard.writeText(address);
+    setCopiedAddr(address);
+    setTimeout(() => setCopiedAddr(null), 2000);
   }
 
   return (
@@ -259,6 +266,7 @@ function UsersView({ balance, overview }) {
                   <th style={s.th}>Email</th>
                   <th style={s.th}>Role</th>
                   <th style={s.th}>MetaMask</th>
+                  <th style={s.th}>Testnet Explorer</th>
                   <th style={s.thRight}>RM</th>
                   <th style={s.thRight}>Elixir</th>
                 </tr>
@@ -274,7 +282,36 @@ function UsersView({ balance, overview }) {
                         {u.role}
                       </span>
                     </td>
-                    <td style={s.tdMono}>{u.metamaskAddress ? shortAddr(u.metamaskAddress) : "Not linked"}</td>
+                    <td style={s.td}>
+                      {u.metamaskAddress ? (
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <span style={s.tdMono}>{shortAddr(u.metamaskAddress)}</span>
+                          <button
+                            onClick={() => copyToClipboard(u.metamaskAddress)}
+                            style={s.copyBtn}
+                            title="Copy address"
+                          >
+                            {copiedAddr === u.metamaskAddress ? "✓" : "📋"}
+                          </button>
+                        </div>
+                      ) : (
+                        <span style={s.tdMuted}>Not linked</span>
+                      )}
+                    </td>
+                    <td style={s.td}>
+                      {u.metamaskAddress ? (
+                        <a
+                          href={`https://sepolia.etherscan.io/address/${u.metamaskAddress}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={s.explorerLink}
+                        >
+                          🔍 View
+                        </a>
+                      ) : (
+                        <span style={s.tdMuted}>—</span>
+                      )}
+                    </td>
                     <td style={s.tdRight}>{u.role === "customer" ? fmt(u.rmBalance, 2) : "—"}</td>
                     <td style={s.tdRight}>{u.role === "customer" ? `${fmt(u.elixirBalance, 0)} ✦` : "—"}</td>
                   </tr>
@@ -1195,6 +1232,31 @@ const s = {
   subCode: { color: "#475569", fontSize: 11, fontWeight: 600 },
   code: { padding: "3px 8px", borderRadius: 8, background: "rgba(56,189,248,0.1)", color: "#38bdf8", fontWeight: 700, fontSize: 12 },
   badge: { padding: "3px 10px", borderRadius: 999, fontSize: 11, fontWeight: 700, textTransform: "capitalize", border: "1px solid" },
+  copyBtn: {
+    padding: "4px 8px",
+    borderRadius: 6,
+    border: "1px solid rgba(56,189,248,0.25)",
+    background: "rgba(56,189,248,0.1)",
+    color: "#38bdf8",
+    cursor: "pointer",
+    fontSize: 12,
+    fontWeight: 700,
+    transition: "all 0.15s",
+  },
+  explorerLink: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 4,
+    padding: "4px 10px",
+    borderRadius: 8,
+    border: "1px solid rgba(139,92,246,0.25)",
+    background: "rgba(139,92,246,0.1)",
+    color: "#a78bfa",
+    textDecoration: "none",
+    fontSize: 12,
+    fontWeight: 700,
+    transition: "all 0.15s",
+  },
   tableFoot: { margin: "14px 2px 0", fontSize: 12, color: "#475569" },
   loadingRow: { display: "flex", gap: 12, alignItems: "center", color: "#64748b", padding: "24px 0" },
   spinner: { width: 18, height: 18, border: "2px solid rgba(251,191,36,0.2)", borderTopColor: "#fbbf24", borderRadius: "50%", animation: "spin 0.8s linear infinite", flexShrink: 0 },
