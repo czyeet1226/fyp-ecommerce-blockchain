@@ -924,7 +924,7 @@ function TransactionsView() {
                 <thead>
                   <tr>
                     <th style={s.thFixed}>User</th>
-                    <th style={s.thFixed}>Type</th>
+                    <th style={s.thFixedWide}>Type</th>
                     <th style={s.thFixed}>From</th>
                     <th style={s.thFlex}>Amount</th>
                     <th style={s.thFixed}>To</th>
@@ -940,7 +940,7 @@ function TransactionsView() {
                       <td style={s.tdFixed}>
                         <span style={s.code}>{tx.userCode || "—"}</span>
                       </td>
-                      <td style={s.tdFixed}>
+                      <td style={s.tdFixedWide}>
                         <span
                           style={{
                             ...s.badge,
@@ -1120,6 +1120,25 @@ const s = {
     width: "120px",
     minWidth: "120px",
     maxWidth: "120px",
+    verticalAlign: "middle",
+  },
+  thFixedWide: { 
+    textAlign: "left", 
+    padding: "10px 12px", 
+    fontSize: 10, 
+    fontWeight: 700, 
+    textTransform: "uppercase", 
+    letterSpacing: 0.8, 
+    color: "#475569", 
+    borderBottom: "1px solid rgba(148,163,184,0.12)", 
+    position: "sticky", 
+    top: 0, 
+    background: "#0a1628", 
+    zIndex: 10,
+    width: "140px",
+    minWidth: "140px",
+    maxWidth: "140px",
+    verticalAlign: "middle",
   },
   thFlex: { 
     textAlign: "right", 
@@ -1135,6 +1154,7 @@ const s = {
     background: "#0a1628", 
     zIndex: 10,
     minWidth: "100px",
+    verticalAlign: "middle",
   },
   thRight: { textAlign: "right", padding: "10px 12px", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8, color: "#475569", borderBottom: "1px solid rgba(148,163,184,0.12)" },
   tr: { borderBottom: "1px solid rgba(148,163,184,0.06)" },
@@ -1148,6 +1168,18 @@ const s = {
     whiteSpace: "nowrap",
     overflow: "hidden",
     textOverflow: "ellipsis",
+    verticalAlign: "middle",
+  },
+  tdFixedWide: { 
+    padding: "12px", 
+    color: "#e2e8f0",
+    width: "140px",
+    minWidth: "140px",
+    maxWidth: "140px",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    verticalAlign: "middle",
   },
   tdFlex: { 
     padding: "12px", 
@@ -1155,6 +1187,7 @@ const s = {
     textAlign: "right",
     minWidth: "100px",
     wordBreak: "break-word",
+    verticalAlign: "middle",
   },
   tdMuted: { padding: "12px", color: "#94a3b8" },
   tdMono: { padding: "12px", color: "#7dd3fc", fontFamily: "'Fira Code', 'Consolas', monospace", fontSize: 12 },
