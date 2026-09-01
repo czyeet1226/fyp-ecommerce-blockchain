@@ -125,6 +125,16 @@ export default function AdminApp({ user, logout }) {
           </div>
         </div>
 
+        <a
+          href={`https://sepolia.etherscan.io/address/${balance.address}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={s.etherscanBtn}
+          title="View your transactions on Etherscan"
+        >
+          🔍 Explore Etherscan
+        </a>
+
         <button style={s.logoutBtn} onClick={logout}>
           Sign Out
         </button>
@@ -1126,6 +1136,21 @@ const s = {
   treasuryRow: { display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 13, color: "#cbd5e1" },
   treasuryStatus: { display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "#64748b", marginTop: 4 },
   statusDot: { width: 8, height: 8, borderRadius: "50%", flexShrink: 0 },
+  etherscanBtn: {
+    padding: "11px 14px",
+    borderRadius: 12,
+    border: "1px solid rgba(56,189,248,0.25)",
+    background: "rgba(56,189,248,0.1)",
+    color: "#38bdf8",
+    cursor: "pointer",
+    fontWeight: 700,
+    fontSize: 13,
+    textDecoration: "none",
+    display: "block",
+    textAlign: "center",
+    marginBottom: 10,
+    transition: "all 0.2s",
+  },
   logoutBtn: { padding: "11px 14px", borderRadius: 12, border: "1px solid rgba(248, 113, 113, 0.18)", background: "rgba(248, 113, 113, 0.06)", color: "#f87171", cursor: "pointer", fontWeight: 700, fontSize: 13 },
   main: { padding: "28px 32px", overflowY: "auto" },
   header: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 20, marginBottom: 24, flexWrap: "wrap" },
