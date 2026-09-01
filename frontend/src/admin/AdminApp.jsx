@@ -83,30 +83,6 @@ export default function AdminApp({ user, logout }) {
 
   return (
     <div style={s.shell}>
-      {/* Custom scrollbar styles */}
-      <style>
-        {`
-          .tableScrollContainer::-webkit-scrollbar {
-            width: 12px;
-            height: 12px;
-          }
-          .tableScrollContainer::-webkit-scrollbar-track {
-            background: #1e293b;
-            border-radius: 6px;
-          }
-          .tableScrollContainer::-webkit-scrollbar-thumb {
-            background: #475569;
-            border-radius: 6px;
-            border: 2px solid #1e293b;
-          }
-          .tableScrollContainer::-webkit-scrollbar-thumb:hover {
-            background: #64748b;
-          }
-          .tableScrollContainer::-webkit-scrollbar-corner {
-            background: #1e293b;
-          }
-        `}
-      </style>
       {/* Sidebar */}
       <aside style={s.sidebar}>
         <div style={s.brandBlock}>
@@ -942,7 +918,7 @@ function TransactionsView() {
             }
           />
         ) : (
-          <div style={s.tableScrollContainer} className="tableScrollContainer">
+          <div style={s.tableScrollContainer}>
             <table style={s.table}>
               <thead>
                 <tr>
@@ -1126,8 +1102,6 @@ const s = {
     border: "1px solid rgba(148,163,184,0.12)",
     borderRadius: 12,
     marginBottom: 12,
-    scrollbarWidth: "thin",
-    scrollbarColor: "#475569 #1e293b",
   },
   tableWrap: { overflowX: "auto" },
   table: { width: "100%", borderCollapse: "collapse", fontSize: 13, minWidth: "1200px" },
