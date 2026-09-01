@@ -266,7 +266,6 @@ function UsersView({ balance, overview }) {
                   <th style={s.th}>Email</th>
                   <th style={s.th}>Role</th>
                   <th style={s.th}>MetaMask</th>
-                  <th style={s.th}>Testnet Explorer</th>
                   <th style={s.thRight}>RM</th>
                   <th style={s.thRight}>Elixir</th>
                 </tr>
@@ -284,32 +283,27 @@ function UsersView({ balance, overview }) {
                     </td>
                     <td style={s.td}>
                       {u.metamaskAddress ? (
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                           <span style={s.tdMono}>{shortAddr(u.metamaskAddress)}</span>
                           <button
                             onClick={() => copyToClipboard(u.metamaskAddress)}
-                            style={s.copyBtn}
+                            style={s.iconBtn}
                             title="Copy address"
                           >
                             {copiedAddr === u.metamaskAddress ? "✓" : "📋"}
                           </button>
+                          <a
+                            href={`https://sepolia.etherscan.io/address/${u.metamaskAddress}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={s.iconBtn}
+                            title="View on Etherscan"
+                          >
+                            🔍
+                          </a>
                         </div>
                       ) : (
                         <span style={s.tdMuted}>Not linked</span>
-                      )}
-                    </td>
-                    <td style={s.td}>
-                      {u.metamaskAddress ? (
-                        <a
-                          href={`https://sepolia.etherscan.io/address/${u.metamaskAddress}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={s.explorerLink}
-                        >
-                          🔍 View
-                        </a>
-                      ) : (
-                        <span style={s.tdMuted}>—</span>
                       )}
                     </td>
                     <td style={s.tdRight}>{u.role === "customer" ? fmt(u.rmBalance, 2) : "—"}</td>
@@ -337,6 +331,7 @@ function StakingView({ showMsg }) {
   const [positions, setPositions] = useState([]);
   const [summary, setSummary] = useState({ totalStaked: 0, totalEarned: 0, activeCount: 0 });
   const [loading, setLoading] = useState(false);
+  const [copiedWallet, setCopiedWallet] = useState(null);
 
   useEffect(() => {
     loadTiers();
@@ -389,6 +384,12 @@ function StakingView({ showMsg }) {
     } finally {
       setSavingDays(null);
     }
+  }
+
+  function copyWalletToClipboard(address) {
+    navigator.clipboard.writeText(address);
+    setCopiedWallet(address);
+    setTimeout(() => setCopiedWallet(null), 2000);
   }
 
   return (
@@ -475,7 +476,27 @@ function StakingView({ showMsg }) {
                       {p.name}
                       <span style={s.subCode}> {p.userCode}</span>
                     </td>
-                    <td style={s.tdMono}>{shortAddr(p.walletAddress)}</td>
+                    <td style={s.td}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <span style={s.tdMono}>{shortAddr(p.walletAddress)}</span>
+                        <button
+                          onClick={() => copyWalletToClipboard(p.walletAddress)}
+                          style={s.iconBtn}
+                          title="Copy address"
+                        >
+                          {copiedWallet === p.walletAddress ? "✓" : "📋"}
+                        </button>
+                        <a
+                          href={`https://sepolia.etherscan.io/address/${p.walletAddress}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={s.iconBtn}
+                          title="View on Etherscan"
+                        >
+                          🔍
+                        </a>
+                      </div>
+                    </td>
                     <td style={s.tdRight}>{fmt(p.amount, 2)} ✦</td>
                     <td style={s.tdRight}>{p.tierDays}d</td>
                     <td style={s.tdRight}>{fmt(p.apy, 2)}%</td>
@@ -1232,7 +1253,7 @@ const s = {
   subCode: { color: "#475569", fontSize: 11, fontWeight: 600 },
   code: { padding: "3px 8px", borderRadius: 8, background: "rgba(56,189,248,0.1)", color: "#38bdf8", fontWeight: 700, fontSize: 12 },
   badge: { padding: "3px 10px", borderRadius: 999, fontSize: 11, fontWeight: 700, textTransform: "capitalize", border: "1px solid" },
-  copyBtn: {
+  iconBtn: {
     padding: "4px 8px",
     borderRadius: 6,
     border: "1px solid rgba(56,189,248,0.25)",
@@ -1241,21 +1262,10 @@ const s = {
     cursor: "pointer",
     fontSize: 12,
     fontWeight: 700,
-    transition: "all 0.15s",
-  },
-  explorerLink: {
+    textDecoration: "none",
     display: "inline-flex",
     alignItems: "center",
-    gap: 4,
-    padding: "4px 10px",
-    borderRadius: 8,
-    border: "1px solid rgba(139,92,246,0.25)",
-    background: "rgba(139,92,246,0.1)",
-    color: "#a78bfa",
-    textDecoration: "none",
-    fontSize: 12,
-    fontWeight: 700,
-    transition: "all 0.15s",
+    justifyContent: "center",
   },
   tableFoot: { margin: "14px 2px 0", fontSize: 12, color: "#475569" },
   loadingRow: { display: "flex", gap: 12, alignItems: "center", color: "#64748b", padding: "24px 0" },
