@@ -918,81 +918,83 @@ function TransactionsView() {
             }
           />
         ) : (
-          <div style={s.tableScrollContainer}>
-            <table style={s.table}>
-              <thead>
-                <tr>
-                  <th style={s.thFixed}>User</th>
-                  <th style={s.thFixed}>Type</th>
-                  <th style={s.thFixed}>From</th>
-                  <th style={s.thFlex}>Amount</th>
-                  <th style={s.thFixed}>To</th>
-                  <th style={s.thFlex}>Amount</th>
-                  <th style={s.thFixed}>Status</th>
-                  <th style={s.thFixed}>Date</th>
-                  <th style={s.thFixed}>Tx Hash</th>
-                </tr>
-              </thead>
-              <tbody>
-                {transactions.map((tx) => (
-                  <tr key={tx.id} style={s.tr}>
-                    <td style={s.tdFixed}>
-                      <span style={s.code}>{tx.userCode || "—"}</span>
-                    </td>
-                    <td style={s.tdFixed}>
-                      <span
-                        style={{
-                          ...s.badge,
-                          color: typeColor(tx.type),
-                          borderColor: `${typeColor(tx.type)}44`,
-                          background: `${typeColor(tx.type)}14`,
-                        }}
-                      >
-                        {tx.type.replace(/_/g, " ")}
-                      </span>
-                    </td>
-                    <td style={s.tdFixed}>
-                      <span style={{ color: "#7dd3fc", fontFamily: "'Fira Code', 'Consolas', monospace", fontSize: 12 }}>
-                        {tx.fromCurrency || "—"}
-                      </span>
-                    </td>
-                    <td style={s.tdFlex}>
-                      {tx.fromAmount != null ? fmt(tx.fromAmount, 4) : "—"}
-                    </td>
-                    <td style={s.tdFixed}>
-                      <span style={{ color: "#7dd3fc", fontFamily: "'Fira Code', 'Consolas', monospace", fontSize: 12 }}>
-                        {tx.toCurrency || "—"}
-                      </span>
-                    </td>
-                    <td style={s.tdFlex}>
-                      {tx.toAmount != null ? fmt(tx.toAmount, 4) : "—"}
-                    </td>
-                    <td style={s.tdFixed}>
-                      <span
-                        style={{
-                          ...s.badge,
-                          color: statusColor(tx.status),
-                          borderColor: `${statusColor(tx.status)}44`,
-                          background: `${statusColor(tx.status)}14`,
-                        }}
-                      >
-                        {tx.status}
-                      </span>
-                    </td>
-                    <td style={s.tdFixed}>
-                      {new Date(tx.createdAt).toLocaleDateString()}
-                    </td>
-                    <td style={s.tdFixed}>
-                      {tx.txHash ? shortAddr(tx.txHash) : "—"}
-                    </td>
+          <>
+            <div style={s.tableScrollContainer}>
+              <table style={s.table}>
+                <thead>
+                  <tr>
+                    <th style={s.thFixed}>User</th>
+                    <th style={s.thFixed}>Type</th>
+                    <th style={s.thFixed}>From</th>
+                    <th style={s.thFlex}>Amount</th>
+                    <th style={s.thFixed}>To</th>
+                    <th style={s.thFlex}>Amount</th>
+                    <th style={s.thFixed}>Status</th>
+                    <th style={s.thFixed}>Date</th>
+                    <th style={s.thFixed}>Tx Hash</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <p style={s.tableFoot}>
-            {transactions.length} transaction(s) shown
-          </p>
+                </thead>
+                <tbody>
+                  {transactions.map((tx) => (
+                    <tr key={tx.id} style={s.tr}>
+                      <td style={s.tdFixed}>
+                        <span style={s.code}>{tx.userCode || "—"}</span>
+                      </td>
+                      <td style={s.tdFixed}>
+                        <span
+                          style={{
+                            ...s.badge,
+                            color: typeColor(tx.type),
+                            borderColor: `${typeColor(tx.type)}44`,
+                            background: `${typeColor(tx.type)}14`,
+                          }}
+                        >
+                          {tx.type.replace(/_/g, " ")}
+                        </span>
+                      </td>
+                      <td style={s.tdFixed}>
+                        <span style={{ color: "#7dd3fc", fontFamily: "'Fira Code', 'Consolas', monospace", fontSize: 12 }}>
+                          {tx.fromCurrency || "—"}
+                        </span>
+                      </td>
+                      <td style={s.tdFlex}>
+                        {tx.fromAmount != null ? fmt(tx.fromAmount, 4) : "—"}
+                      </td>
+                      <td style={s.tdFixed}>
+                        <span style={{ color: "#7dd3fc", fontFamily: "'Fira Code', 'Consolas', monospace", fontSize: 12 }}>
+                          {tx.toCurrency || "—"}
+                        </span>
+                      </td>
+                      <td style={s.tdFlex}>
+                        {tx.toAmount != null ? fmt(tx.toAmount, 4) : "—"}
+                      </td>
+                      <td style={s.tdFixed}>
+                        <span
+                          style={{
+                            ...s.badge,
+                            color: statusColor(tx.status),
+                            borderColor: `${statusColor(tx.status)}44`,
+                            background: `${statusColor(tx.status)}14`,
+                          }}
+                        >
+                          {tx.status}
+                        </span>
+                      </td>
+                      <td style={s.tdFixed}>
+                        {new Date(tx.createdAt).toLocaleDateString()}
+                      </td>
+                      <td style={s.tdFixed}>
+                        {tx.txHash ? shortAddr(tx.txHash) : "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p style={s.tableFoot}>
+              {transactions.length} transaction(s) shown
+            </p>
+          </>
         )}
       </section>
     </>
