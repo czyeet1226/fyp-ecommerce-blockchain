@@ -952,21 +952,17 @@ function TransactionsView() {
                       </span>
                     </td>
                     <td style={s.tdFixed}>
-                      {tx.fromCurrency ? (
-                        <span style={s.tdMono}>{tx.fromCurrency}</span>
-                      ) : (
-                        "—"
-                      )}
+                      <span style={{ color: "#7dd3fc", fontFamily: "'Fira Code', 'Consolas', monospace", fontSize: 12 }}>
+                        {tx.fromCurrency || "—"}
+                      </span>
                     </td>
                     <td style={s.tdFlex}>
                       {tx.fromAmount != null ? fmt(tx.fromAmount, 4) : "—"}
                     </td>
                     <td style={s.tdFixed}>
-                      {tx.toCurrency ? (
-                        <span style={s.tdMono}>{tx.toCurrency}</span>
-                      ) : (
-                        "—"
-                      )}
+                      <span style={{ color: "#7dd3fc", fontFamily: "'Fira Code', 'Consolas', monospace", fontSize: 12 }}>
+                        {tx.toCurrency || "—"}
+                      </span>
                     </td>
                     <td style={s.tdFlex}>
                       {tx.toAmount != null ? fmt(tx.toAmount, 4) : "—"}
