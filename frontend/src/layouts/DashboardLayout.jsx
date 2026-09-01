@@ -155,9 +155,9 @@ export default function DashboardLayout({
           />
         </div>
 
-        {user?.walletAddress && (
+        {account && (
           <a
-            href={`https://sepolia.etherscan.io/address/${user.walletAddress}`}
+            href={`https://sepolia.etherscan.io/address/${account}`}
             target="_blank"
             rel="noopener noreferrer"
             style={css.etherscanBtn}
