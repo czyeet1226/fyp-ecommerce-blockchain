@@ -23,6 +23,7 @@ const {
   SubscriptionPayment,
   Order,
   Product,
+  WalletTransaction,
 } = require("../models/mysql.models");
 const { BlockchainLog } = require("../models/blockchainLog.model");
 const blockchainService = require("../config/blockchain");
@@ -171,6 +172,81 @@ router.get("/overview", async (req, res) => {
         admins,
         total: customers + merchants + admins,
       },
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ── GET /api/admin/transactions ─────────────────────────────────────────────
+//
+// List all wallet transactions across all users. Optional query params:
+//   ?search=     — filter by userCode or txHash
+//   ?type=       — filter by transaction type (SWAP, TRANSFER_OUT, etc.)
+//   ?status=     — filter by status (pending, completed, failed)
+//
+router.get("/transactions", async (req, res) => {
+  try {
+    const search = String(req.query.search || "").trim();
+    const typeFilter = String(req.query.type || "").trim();
+    const statusFilter = String(req.query.status || "").trim();
+
+    const where = {};
+
+    // Search filter
+    if (search) {
+      const like = { [Op.like]: `%${search}%` };
+      where[Op.or] = [
+        { userCode: like },
+        { txHash: like },
+      ];
+    }
+
+    // Type filter
+    if (typeFilter && typeFilter !== "ALL") {
+      where.type = typeFilter;
+    }
+
+    // Status filter
+    if (statusFilter && statusFilter !== "ALL") {
+      where.status = statusFilter;
+    }
+
+    const transactions = await WalletTransaction.findAll({
+      where,
+      include: [
+        {
+          model: User,
+          as: "user",
+          attributes: ["id", "name", "email"],
+          required: false,
+        },
+      ],
+      order: [["createdAt", "DESC"]],
+      limit: 500,
+    });
+
+    const formatted = transactions.map((tx) => ({
+      id: tx.id,
+      userCode: tx.userCode,
+      userName: tx.user?.name || "—",
+      userEmail: tx.user?.email || "—",
+      type: tx.type,
+      fromCurrency: tx.fromCurrency || "—",
+      fromAmount: tx.fromAmount ? Number(tx.fromAmount) : 0,
+      toCurrency: tx.toCurrency || "—",
+      toAmount: tx.toAmount ? Number(tx.toAmount) : 0,
+      status: tx.status,
+      txHash: tx.txHash || "",
+      counterparty: tx.counterparty || "",
+      note: tx.note || "",
+      createdAt: tx.createdAt,
+    }));
+
+    return res.json({
+      success: true,
+      total: formatted.length,
+      transactions: formatted,
     });
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message });
