@@ -570,9 +570,11 @@ router.get("/logs", async (req, res) => {
       });
     }
 
-    // Fetch logs from Railway GraphQL API
+    // First, get the latest deployment ID
     const fetch = require("node-fetch");
-    const response = await fetch("https://backboard.railway.app/graphql/v2", {
+    
+    // Query to get deployments
+    const deploymentsResponse = await fetch("https://backboard.railway.app/graphql/v2", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -580,36 +582,86 @@ router.get("/logs", async (req, res) => {
       },
       body: JSON.stringify({
         query: `
-          query GetLogs($projectId: String!, $environmentId: String!, $serviceId: String!, $limit: Int!) {
-            deploymentLogs(
-              projectId: $projectId
-              environmentId: $environmentId
-              serviceId: $serviceId
-              limit: $limit
-            ) {
-              logs {
-                timestamp
-                message
-                severity
+          query GetDeployments($projectId: String!, $environmentId: String!) {
+            deployments(input: { 
+              projectId: $projectId, 
+              environmentId: $environmentId 
+            }) {
+              edges {
+                node {
+                  id
+                  status
+                  createdAt
+                  service {
+                    id
+                  }
+                }
               }
             }
           }
         `,
-        variables: { projectId, environmentId, serviceId, limit },
+        variables: { projectId, environmentId },
       }),
     });
 
-    const data = await response.json();
+    const deploymentsData = await deploymentsResponse.json();
 
-    if (data.errors) {
+    if (deploymentsData.errors) {
       return res.status(500).json({
         success: false,
-        message: "Failed to fetch Railway logs: " + data.errors[0].message,
+        message: "Failed to fetch deployments: " + deploymentsData.errors[0].message,
         logs: [],
       });
     }
 
-    const logs = data.data?.deploymentLogs?.logs || [];
+    // Find the latest deployment for our service
+    const deployments = deploymentsData.data?.deployments?.edges || [];
+    const serviceDeployments = deployments
+      .filter(edge => edge.node.service?.id === serviceId)
+      .sort((a, b) => new Date(b.node.createdAt) - new Date(a.node.createdAt));
+
+    if (serviceDeployments.length === 0) {
+      return res.json({
+        success: true,
+        total: 0,
+        logs: [],
+      });
+    }
+
+    const latestDeploymentId = serviceDeployments[0].node.id;
+
+    // Now fetch logs for this deployment
+    const logsResponse = await fetch("https://backboard.railway.app/graphql/v2", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${railwayToken}`,
+      },
+      body: JSON.stringify({
+        query: `
+          query GetLogs($deploymentId: String!, $limit: Int!) {
+            logs(deploymentId: $deploymentId, limit: $limit) {
+              timestamp
+              message
+              severity
+            }
+          }
+        `,
+        variables: { deploymentId: latestDeploymentId, limit },
+      }),
+    });
+
+    const logsData = await logsResponse.json();
+
+    if (logsData.errors) {
+      return res.status(500).json({
+        success: false,
+        message: "Failed to fetch logs: " + logsData.errors[0].message,
+        logs: [],
+      });
+    }
+
+    const logs = logsData.data?.logs || [];
 
     return res.json({
       success: true,
