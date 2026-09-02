@@ -1115,84 +1115,29 @@ function LogsView() {
     }
   }
 
-  function getSeverityInfo(severity) {
-    const s = severity?.toLowerCase();
-    switch (s) {
-      case "error":
-        return { color: "#f87171", bg: "rgba(248,113,113,0.12)", border: "rgba(248,113,113,0.3)", icon: "❌", label: "ERROR" };
-      case "warn":
-      case "warning":
-        return { color: "#fbbf24", bg: "rgba(251,191,36,0.12)", border: "rgba(251,191,36,0.3)", icon: "⚠️", label: "WARN" };
-      case "info":
-        return { color: "#38bdf8", bg: "rgba(56,189,248,0.12)", border: "rgba(56,189,248,0.3)", icon: "ℹ️", label: "INFO" };
-      case "debug":
-        return { color: "#a78bfa", bg: "rgba(167,139,250,0.12)", border: "rgba(167,139,250,0.3)", icon: "🔍", label: "DEBUG" };
-      default:
-        return { color: "#94a3b8", bg: "rgba(148,163,184,0.12)", border: "rgba(148,163,184,0.3)", icon: "📋", label: "LOG" };
+  function getSeverityColor(severity) {
+    switch (severity?.toLowerCase()) {
+      case "error": return "#f87171";
+      case "warn": case "warning": return "#fbbf24";
+      case "info": return "#38bdf8";
+      case "debug": return "#a78bfa";
+      default: return "#94a3b8";
     }
   }
 
-  function getMethodColor(method) {
-    switch (method) {
-      case "GET": return "#10b981";
-      case "POST": return "#3b82f6";
-      case "PUT": return "#f59e0b";
-      case "DELETE": return "#ef4444";
-      case "PATCH": return "#8b5cf6";
-      default: return "#6b7280";
+  function getSeverityIcon(severity) {
+    switch (severity?.toLowerCase()) {
+      case "error": return "🔴";
+      case "warn": case "warning": return "🟡";
+      case "info": return "🔵";
+      case "debug": return "🟣";
+      default: return "⚪";
     }
   }
-
-  function getStatusColor(code) {
-    if (code >= 200 && code < 300) return "#10b981";
-    if (code >= 300 && code < 400) return "#3b82f6";
-    if (code >= 400 && code < 500) return "#f59e0b";
-    if (code >= 500) return "#ef4444";
-    return "#6b7280";
-  }
-
-  const summary = {
-    total: logs.length,
-    errors: logs.filter(l => l.severity?.toLowerCase() === "error").length,
-    warnings: logs.filter(l => l.severity?.toLowerCase() === "warn" || l.severity?.toLowerCase() === "warning").length,
-    info: logs.filter(l => l.severity?.toLowerCase() === "info").length,
-  };
 
   return (
     <>
-      {/* Summary Cards */}
-      <div style={s.cardGrid}>
-        <Tile
-          icon="📊"
-          label="Total Logs"
-          value={fmt(summary.total, 0)}
-          sub={`Last ${limit} entries`}
-          color="#38bdf8"
-        />
-        <Tile
-          icon="❌"
-          label="Errors"
-          value={fmt(summary.errors, 0)}
-          sub={summary.errors > 0 ? "Needs attention" : "All clear"}
-          color="#f87171"
-        />
-        <Tile
-          icon="⚠️"
-          label="Warnings"
-          value={fmt(summary.warnings, 0)}
-          sub={summary.warnings > 0 ? "Review recommended" : "No issues"}
-          color="#fbbf24"
-        />
-        <Tile
-          icon="ℹ️"
-          label="Info Logs"
-          value={fmt(summary.info, 0)}
-          sub="Normal activity"
-          color="#10b981"
-        />
-      </div>
-
-      {/* Railway Link Banner */}
+      {/* Railway Dashboard Link Banner */}
       <div style={logStyles.railwayBanner}>
         <div style={logStyles.railwayContent}>
           <div style={logStyles.railwayIcon}>🚂</div>
@@ -1213,174 +1158,107 @@ function LogsView() {
         </a>
       </div>
 
-      {/* Logs Section */}
-      <section style={s.sectionCard}>
+      <div style={s.sectionCard}>
         <div style={s.sectionHead}>
           <div>
-            <p style={s.sectionLabel}>Activity Monitor</p>
             <h3 style={s.sectionTitle}>User Activity Logs</h3>
-            <p style={logStyles.subtitle}>
-              Real-time HTTP requests, user actions, and system events from Railway server
-            </p>
-          </div>
-          <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-            <label style={logStyles.autoRefreshLabel}>
-              <input
-                type="checkbox"
-                checked={autoRefresh}
-                onChange={(e) => setAutoRefresh(e.target.checked)}
-                style={{ cursor: "pointer" }}
-              />
-              <span>Auto-refresh (10s)</span>
-            </label>
-            <select
-              value={severityFilter}
-              onChange={(e) => setSeverityFilter(e.target.value)}
-              style={s.filterSelect}
-            >
-              <option value="ALL">All Severity</option>
-              <option value="INFO">ℹ️ Info Only</option>
-              <option value="WARN">⚠️ Warnings</option>
-              <option value="ERROR">❌ Errors Only</option>
-            </select>
-            <select
-              value={limit}
-              onChange={(e) => setLimit(Number(e.target.value))}
-              style={s.filterSelect}
-            >
-              <option value="50">50 logs</option>
-              <option value="100">100 logs</option>
-              <option value="200">200 logs</option>
-              <option value="500">500 logs</option>
-            </select>
-            <button onClick={loadLogs} style={s.btn} disabled={loading}>
-              {loading ? "⏳ Loading..." : "🔄 Refresh"}
-            </button>
+            <p style={s.sectionSub}>Real-time HTTP requests and system events from Railway</p>
           </div>
         </div>
 
+        {/* Filters Row */}
+        <div style={logStyles.filtersRow}>
+          <label style={logStyles.checkboxLabel}>
+            <input
+              type="checkbox"
+              checked={autoRefresh}
+              onChange={(e) => setAutoRefresh(e.target.checked)}
+              style={logStyles.checkbox}
+            />
+            <span>Auto-refresh (10s)</span>
+          </label>
+
+          <select
+            value={severityFilter}
+            onChange={(e) => setSeverityFilter(e.target.value)}
+            style={logStyles.filterSelect}
+          >
+            <option value="ALL">All Severity</option>
+            <option value="INFO">ℹ️ Info Only</option>
+            <option value="WARN">⚠️ Warnings</option>
+            <option value="ERROR">❌ Errors Only</option>
+          </select>
+
+          <select
+            value={limit}
+            onChange={(e) => setLimit(Number(e.target.value))}
+            style={logStyles.filterSelect}
+          >
+            <option value="50">50 logs</option>
+            <option value="100">100 logs</option>
+            <option value="200">200 logs</option>
+            <option value="500">500 logs</option>
+          </select>
+
+          <button 
+            onClick={loadLogs} 
+            style={logStyles.refreshBtn} 
+            disabled={loading}
+            onMouseEnter={(e) => {
+              if (!loading) {
+                e.currentTarget.style.transform = "translateY(-2px)";
+                e.currentTarget.style.boxShadow = "0 6px 20px rgba(56,189,248,0.4)";
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "0 4px 12px rgba(56,189,248,0.3)";
+            }}
+          >
+            <span style={logStyles.refreshIcon}>{loading ? "⏳" : "🔄"}</span>
+            <span>{loading ? "Loading..." : "Refresh"}</span>
+          </button>
+        </div>
+
+        <div style={{ ...s.alert, background: "rgba(16,185,129,0.12)", borderColor: "rgba(16,185,129,0.3)", color: "#34d399", marginBottom: 16 }}>
+          ✅ Live activity logs - All user actions, API requests, and system events are captured here
+        </div>
+
         {error && (
-          <div style={logStyles.errorAlert}>
-            <span style={logStyles.alertIcon}>⚠️</span>
-            <span>{error}</span>
+          <div style={{ ...s.alert, background: "rgba(239,68,68,0.12)", borderColor: "rgba(248,113,113,0.3)", color: "#fca5a5" }}>
+            ⚠ {error}
           </div>
         )}
 
         {loading && !logs.length ? (
-          <Loading label="Fetching activity logs from Railway..." />
+          <Loading label="Fetching logs..." />
         ) : logs.length === 0 ? (
-          <div style={logStyles.emptyState}>
-            <div style={logStyles.emptyIcon}>📜</div>
-            <h4 style={logStyles.emptyTitle}>No Logs Available</h4>
-            <p style={logStyles.emptyText}>
-              User activity logs will appear here once your application starts receiving requests.
-            </p>
-          </div>
+          <Empty icon="📜" title="No logs available" text="System logs will appear here" />
         ) : (
           <>
-            <div style={logStyles.logsGrid}>
-              {logs.map((log, idx) => {
-                const sevInfo = getSeverityInfo(log.severity);
-                const methodColor = getMethodColor(log.method);
-                const statusColor = getStatusColor(log.statusCode);
-                
-                return (
-                  <div key={idx} style={logStyles.logCard}>
-                    {/* Header */}
-                    <div style={logStyles.logCardHeader}>
-                      <div style={logStyles.logCardLeft}>
-                        <span
-                          style={{
-                            ...logStyles.severityBadge,
-                            background: sevInfo.bg,
-                            borderColor: sevInfo.border,
-                            color: sevInfo.color,
-                          }}
-                        >
-                          {sevInfo.icon} {sevInfo.label}
-                        </span>
-                        {log.method && (
-                          <span
-                            style={{
-                              ...logStyles.methodBadge,
-                              background: `${methodColor}18`,
-                              borderColor: `${methodColor}40`,
-                              color: methodColor,
-                            }}
-                          >
-                            {log.method}
-                          </span>
-                        )}
-                        {log.statusCode && (
-                          <span
-                            style={{
-                              ...logStyles.statusBadge,
-                              background: `${statusColor}18`,
-                              borderColor: `${statusColor}40`,
-                              color: statusColor,
-                            }}
-                          >
-                            {log.statusCode}
-                          </span>
-                        )}
-                      </div>
-                      <div style={logStyles.logCardRight}>
-                        <span style={logStyles.timestamp}>
-                          {new Date(log.timestamp).toLocaleString()}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Path */}
-                    {log.path && (
-                      <div style={logStyles.pathRow}>
-                        <span style={logStyles.pathIcon}>🔗</span>
-                        <code style={logStyles.pathCode}>{log.path}</code>
-                      </div>
-                    )}
-
-                    {/* Message */}
-                    <div style={logStyles.messageRow}>
-                      {log.message}
-                    </div>
-
-                    {/* Footer Metadata */}
-                    <div style={logStyles.logCardFooter}>
-                      {log.userCode && (
-                        <span style={logStyles.metaChip}>
-                          👤 {log.userCode}
-                        </span>
-                      )}
-                      {log.userRole && (
-                        <span style={logStyles.metaChip}>
-                          🎭 {log.userRole}
-                        </span>
-                      )}
-                      {log.responseTime && (
-                        <span style={logStyles.metaChip}>
-                          ⏱️ {log.responseTime}ms
-                        </span>
-                      )}
-                      {log.ipAddress && (
-                        <span style={logStyles.metaChip}>
-                          🌐 {log.ipAddress}
-                        </span>
-                      )}
-                    </div>
+            <div style={s.logsContainer}>
+              {logs.map((log, idx) => (
+                <div key={idx} style={s.logEntry}>
+                  <div style={s.logHeader}>
+                    <span style={s.logIcon}>{getSeverityIcon(log.severity)}</span>
+                    <span style={{ ...s.logSeverity, color: getSeverityColor(log.severity) }}>
+                      {(log.severity || "INFO").toUpperCase()}
+                    </span>
+                    <span style={s.logTimestamp}>
+                      {new Date(log.timestamp).toLocaleString()}
+                    </span>
                   </div>
-                );
-              })}
+                  <pre style={s.logMessage}>{log.message}</pre>
+                </div>
+              ))}
             </div>
-            
-            <div style={logStyles.footer}>
-              <span style={logStyles.footerText}>
-                Showing {logs.length} log entr{logs.length === 1 ? "y" : "ies"}
-                {autoRefresh && " • Auto-refreshing every 10 seconds"}
-              </span>
-            </div>
+            <p style={s.tableFoot}>
+              {logs.length} log entr{logs.length === 1 ? "y" : "ies"} shown
+              {autoRefresh && " • Auto-refreshing every 10 seconds"}
+            </p>
           </>
         )}
-      </section>
+      </div>
     </>
   );
 }
@@ -1691,7 +1569,7 @@ const s = {
   refundBtn: { padding: "8px 12px", borderRadius: 10, border: "1px solid rgba(248,113,113,0.4)", background: "rgba(248,113,113,0.12)", color: "#fca5a5", cursor: "pointer", fontWeight: 800, fontSize: 12, whiteSpace: "nowrap" },
 };
 
-// ── Log Activity Styles (Modern Card Layout) ────────────────────────────────
+// ── Log Activity Styles ─────────────────────────────────────────────────────
 const logStyles = {
   // Railway Banner
   railwayBanner: {
@@ -1753,215 +1631,71 @@ const logStyles = {
     boxShadow: "0 4px 12px rgba(139,92,246,0.3)",
   },
   
-  // Subtitle
-  subtitle: {
-    margin: "6px 0 0",
-    fontSize: 13,
-    color: "#64748b",
-    fontWeight: 500,
+  // Filters Row
+  filtersRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    padding: "16px 0",
+    flexWrap: "wrap",
   },
   
-  // Auto-refresh label
-  autoRefreshLabel: {
+  checkboxLabel: {
     display: "flex",
     alignItems: "center",
     gap: 8,
     fontSize: 13,
     color: "#cbd5e1",
+    fontWeight: 600,
     cursor: "pointer",
-    padding: "6px 12px",
-    borderRadius: 8,
-    background: "rgba(148,163,184,0.08)",
-    border: "1px solid rgba(148,163,184,0.12)",
-  },
-  
-  // Error alert
-  errorAlert: {
-    padding: "14px 18px",
-    borderRadius: 12,
-    background: "rgba(239,68,68,0.12)",
-    border: "1px solid rgba(248,113,113,0.3)",
-    color: "#fca5a5",
-    fontSize: 14,
-    fontWeight: 600,
-    display: "flex",
-    alignItems: "center",
-    gap: 10,
-    marginBottom: 16,
-  },
-  alertIcon: {
-    fontSize: 18,
-    flexShrink: 0,
-  },
-  
-  // Empty state
-  emptyState: {
-    padding: "60px 20px",
-    textAlign: "center",
-  },
-  emptyIcon: {
-    fontSize: 64,
-    marginBottom: 16,
-    opacity: 0.6,
-  },
-  emptyTitle: {
-    margin: "0 0 8px",
-    fontSize: 18,
-    fontWeight: 800,
-    color: "#f1f5f9",
-  },
-  emptyText: {
-    margin: 0,
-    fontSize: 14,
-    color: "#64748b",
-    maxWidth: 400,
-    marginLeft: "auto",
-    marginRight: "auto",
-  },
-  
-  // Logs grid
-  logsGrid: {
-    display: "grid",
-    gap: 14,
-    marginTop: 8,
-  },
-  
-  // Log card
-  logCard: {
-    padding: "16px 18px",
-    borderRadius: 14,
-    background: "rgba(8,15,28,0.6)",
-    border: "1px solid rgba(148,163,184,0.12)",
-    display: "grid",
-    gap: 12,
-    transition: "border-color 0.2s, box-shadow 0.2s",
-  },
-  
-  logCardHeader: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
-    flexWrap: "wrap",
-  },
-  
-  logCardLeft: {
-    display: "flex",
-    alignItems: "center",
-    gap: 8,
-    flexWrap: "wrap",
-  },
-  
-  logCardRight: {
-    display: "flex",
-    alignItems: "center",
-    gap: 8,
-  },
-  
-  severityBadge: {
-    padding: "6px 12px",
-    borderRadius: 8,
-    border: "1px solid",
-    fontSize: 11,
-    fontWeight: 800,
-    display: "inline-flex",
-    alignItems: "center",
-    gap: 6,
-    textTransform: "uppercase",
-    letterSpacing: "0.5px",
-  },
-  
-  methodBadge: {
-    padding: "5px 10px",
-    borderRadius: 6,
-    border: "1px solid",
-    fontSize: 11,
-    fontWeight: 800,
-    textTransform: "uppercase",
-    letterSpacing: "0.3px",
-  },
-  
-  statusBadge: {
-    padding: "5px 10px",
-    borderRadius: 6,
-    border: "1px solid",
-    fontSize: 11,
-    fontWeight: 800,
-  },
-  
-  timestamp: {
-    fontSize: 12,
-    color: "#64748b",
-    fontWeight: 600,
-    fontFamily: "'Courier New', monospace",
-  },
-  
-  pathRow: {
-    display: "flex",
-    alignItems: "center",
-    gap: 8,
-    padding: "10px 14px",
+    padding: "10px 16px",
     borderRadius: 10,
-    background: "rgba(15,23,42,0.7)",
-    border: "1px solid rgba(148,163,184,0.08)",
+    background: "rgba(148,163,184,0.08)",
+    border: "1px solid rgba(148,163,184,0.15)",
+    transition: "all 0.2s",
   },
   
-  pathIcon: {
-    fontSize: 14,
-    flexShrink: 0,
-    opacity: 0.7,
+  checkbox: {
+    width: 16,
+    height: 16,
+    cursor: "pointer",
+    accentColor: "#38bdf8",
   },
   
-  pathCode: {
-    flex: 1,
-    fontSize: 13,
-    fontFamily: "'Courier New', monospace",
-    color: "#38bdf8",
-    fontWeight: 600,
-    overflowX: "auto",
-    whiteSpace: "nowrap",
-  },
-  
-  messageRow: {
-    fontSize: 14,
+  filterSelect: {
+    padding: "10px 16px",
+    borderRadius: 10,
+    border: "1px solid rgba(148,163,184,0.2)",
+    background: "rgba(15,23,42,0.8)",
     color: "#e2e8f0",
-    lineHeight: 1.6,
-    wordBreak: "break-word",
+    fontSize: 13,
+    fontWeight: 600,
+    cursor: "pointer",
+    outline: "none",
+    transition: "all 0.2s",
+    minWidth: 140,
   },
   
-  logCardFooter: {
+  refreshBtn: {
+    padding: "10px 20px",
+    borderRadius: 12,
+    border: "none",
+    background: "linear-gradient(135deg, #38bdf8, #3b82f6)",
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: 800,
+    cursor: "pointer",
     display: "flex",
     alignItems: "center",
-    gap: 10,
-    flexWrap: "wrap",
-    paddingTop: 8,
-    borderTop: "1px solid rgba(148,163,184,0.08)",
+    gap: 8,
+    transition: "all 0.2s",
+    boxShadow: "0 4px 12px rgba(56,189,248,0.3)",
+    marginLeft: "auto",
   },
   
-  metaChip: {
-    padding: "4px 10px",
-    borderRadius: 6,
-    background: "rgba(148,163,184,0.08)",
-    border: "1px solid rgba(148,163,184,0.12)",
-    fontSize: 11,
-    color: "#94a3b8",
-    fontWeight: 600,
-    display: "inline-flex",
-    alignItems: "center",
-    gap: 6,
-  },
-  
-  // Footer
-  footer: {
-    marginTop: 16,
-    paddingTop: 16,
-    borderTop: "1px solid rgba(148,163,184,0.1)",
-    textAlign: "center",
-  },
-  
-  footerText: {
-    fontSize: 13,
-    color: "#64748b",
-    fontWeight: 600,
+  refreshIcon: {
+    fontSize: 16,
+    display: "inline-block",
+    transition: "transform 0.3s",
   },
 };
