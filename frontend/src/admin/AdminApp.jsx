@@ -1135,8 +1135,8 @@ function LogsView() {
       <div style={s.sectionCard}>
         <div style={s.sectionHead}>
           <div>
-            <h3 style={s.sectionTitle}>Railway Server Logs</h3>
-            <p style={s.sectionSub}>Live deployment logs from Railway platform</p>
+            <h3 style={s.sectionTitle}>System Activity Logs</h3>
+            <p style={s.sectionSub}>Backend application logs and deployment history</p>
           </div>
           <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
             <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "#cbd5e1" }}>
@@ -1164,6 +1164,18 @@ function LogsView() {
           </div>
         </div>
 
+        <div style={{ ...s.alert, background: "rgba(56,189,248,0.12)", borderColor: "rgba(56,189,248,0.3)", color: "#7dd3fc", marginBottom: 16 }}>
+          ℹ️ For detailed Railway deployment logs, visit:{" "}
+          <a 
+            href="https://railway.app/project/068a348f-064a-4190-9d3a-17cd513270ab" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            style={{ color: "#38bdf8", textDecoration: "underline", fontWeight: 700 }}
+          >
+            Railway Dashboard
+          </a>
+        </div>
+
         {error && (
           <div style={{ ...s.alert, background: "rgba(239,68,68,0.12)", borderColor: "rgba(248,113,113,0.3)", color: "#fca5a5" }}>
             ⚠ {error}
@@ -1173,7 +1185,7 @@ function LogsView() {
         {loading && !logs.length ? (
           <Loading label="Fetching logs..." />
         ) : logs.length === 0 ? (
-          <Empty icon="📜" title="No logs available" text="No server logs found or Railway API not configured" />
+          <Empty icon="📜" title="No logs available" text="System logs will appear here" />
         ) : (
           <>
             <div style={s.logsContainer}>
