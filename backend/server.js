@@ -71,6 +71,10 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Activity logging middleware (logs all HTTP requests)
+const { activityLogger } = require("./middleware/activityLogger");
+app.use(activityLogger);
+
 // ── Routes ───────────────────────────────────────────────────────────────
 
 app.use("/api/auth", authRoutes);

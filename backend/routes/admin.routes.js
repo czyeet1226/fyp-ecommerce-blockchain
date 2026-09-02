@@ -554,143 +554,50 @@ router.post("/escrow/resolve", async (req, res) => {
 //
 // ── GET /api/admin/logs ─────────────────────────────────────────────────────
 //
-// Display system activity logs. Since Railway logs require complex authentication
-// and are best viewed in Railway's dashboard, this endpoint shows backend application
-// logs and recent deployment information.
+// Fetch user activity logs from MongoDB.
+// Shows all HTTP requests, user activities, and system events.
 //
 router.get("/logs", async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 100;
+    const severity = req.query.severity || null; // Filter by severity
+    const userId = req.query.userId || null; // Filter by user
     
-    // Railway credentials from environment
-    const railwayToken = process.env.RAILWAY_API_TOKEN;
-    const projectId = process.env.RAILWAY_PROJECT_ID || "068a348f-064a-4190-9d3a-17cd513270ab";
-    const serviceId = process.env.RAILWAY_SERVICE_ID || "14942b9c-b589-4367-bdc4-c60353a1d9e9";
-    const environmentId = process.env.RAILWAY_ENVIRONMENT_ID || "64a899d3-cee6-4000-b85f-1b1a9d6dbc12";
-
-    // Generate mock activity logs for demonstration
-    // In production, you could read from actual log files or a logging service
-    const mockLogs = [
-      {
-        timestamp: new Date(Date.now() - 60000).toISOString(),
-        message: "✅ Server started successfully on port " + (process.env.PORT || 5000),
-        severity: "info"
-      },
-      {
-        timestamp: new Date(Date.now() - 120000).toISOString(),
-        message: "📊 Database connection established - MySQL",
-        severity: "info"
-      },
-      {
-        timestamp: new Date(Date.now() - 180000).toISOString(),
-        message: "🔗 Blockchain service initialized - Hardhat RPC connected",
-        severity: "info"
-      },
-      {
-        timestamp: new Date(Date.now() - 240000).toISOString(),
-        message: "🚀 Elixir Commerce Backend v1.0.0 starting...",
-        severity: "info"
-      },
-      {
-        timestamp: new Date(Date.now() - 300000).toISOString(),
-        message: "📌 Environment: " + (process.env.NODE_ENV || "development"),
-        severity: "info"
-      },
-      {
-        timestamp: new Date(Date.now() - 360000).toISOString(),
-        message: "🔐 JWT authentication middleware loaded",
-        severity: "info"
-      },
-      {
-        timestamp: new Date(Date.now() - 420000).toISOString(),
-        message: "📦 All routes registered successfully",
-        severity: "info"
-      },
-      {
-        timestamp: new Date(Date.now() - 480000).toISOString(),
-        message: "💡 For detailed Railway deployment logs, visit Railway Dashboard",
-        severity: "info"
-      },
-      {
-        timestamp: new Date().toISOString(),
-        message: "🔗 Railway Project: https://railway.app/project/" + projectId,
-        severity: "info"
-      }
-    ];
-
-    // If Railway token is configured, try to fetch recent deployment info
-    if (railwayToken) {
-      try {
-        const fetch = require("node-fetch");
-        const deploymentsResponse = await fetch("https://backboard.railway.app/graphql/v2", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${railwayToken}`,
-          },
-          body: JSON.stringify({
-            query: `
-              query GetDeployments($projectId: String!, $environmentId: String!) {
-                deployments(input: { 
-                  projectId: $projectId, 
-                  environmentId: $environmentId 
-                }) {
-                  edges {
-                    node {
-                      id
-                      status
-                      createdAt
-                      service {
-                        id
-                        name
-                      }
-                    }
-                  }
-                }
-              }
-            `,
-            variables: { projectId, environmentId },
-          }),
-        });
-
-        const deploymentsData = await deploymentsResponse.json();
-        
-        if (!deploymentsData.errors) {
-          const deployments = deploymentsData.data?.deployments?.edges || [];
-          const recentServiceDeployments = deployments
-            .filter(edge => edge.node.service?.id === serviceId)
-            .slice(0, 5);
-
-          // Add deployment info to logs
-          recentServiceDeployments.forEach((edge, idx) => {
-            const deployment = edge.node;
-            mockLogs.unshift({
-              timestamp: deployment.createdAt,
-              message: `🚢 Deployment ${deployment.status}: ${deployment.id.slice(0, 8)}... (${new Date(deployment.createdAt).toLocaleString()})`,
-              severity: deployment.status === "SUCCESS" ? "info" : deployment.status === "FAILED" ? "error" : "warn"
-            });
-          });
-        }
-      } catch (railwayErr) {
-        // Silently fail if Railway API is unavailable
-        mockLogs.unshift({
-          timestamp: new Date().toISOString(),
-          message: "⚠️ Railway API unavailable - showing local logs only",
-          severity: "warn"
-        });
-      }
-    } else {
-      mockLogs.unshift({
-        timestamp: new Date().toISOString(),
-        message: "ℹ️ Add RAILWAY_API_TOKEN to .env to see deployment history",
-        severity: "info"
-      });
+    const ActivityLog = require("../models/activityLog.model");
+    
+    // Build query filter
+    const filter = {};
+    if (severity && severity !== "ALL") {
+      filter.severity = severity.toLowerCase();
     }
-
+    if (userId) {
+      filter.userId = userId;
+    }
+    
+    // Fetch logs from MongoDB, sorted by newest first
+    const logs = await ActivityLog.find(filter)
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .lean();
+    
+    // Format logs for frontend
+    const formattedLogs = logs.map(log => ({
+      timestamp: log.createdAt,
+      message: log.message,
+      severity: log.severity || "info",
+      method: log.method,
+      path: log.path,
+      statusCode: log.statusCode,
+      responseTime: log.responseTime,
+      userCode: log.userCode,
+      userRole: log.userRole,
+      ipAddress: log.ipAddress,
+    }));
+    
     return res.json({
       success: true,
-      total: Math.min(mockLogs.length, limit),
-      logs: mockLogs.slice(0, limit),
+      total: formattedLogs.length,
+      logs: formattedLogs,
     });
   } catch (err) {
     return res.status(500).json({

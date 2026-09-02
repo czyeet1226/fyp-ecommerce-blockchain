@@ -1080,23 +1080,28 @@ function LogsView() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [limit, setLimit] = useState(100);
+  const [severityFilter, setSeverityFilter] = useState("ALL");
   const [autoRefresh, setAutoRefresh] = useState(false);
 
   useEffect(() => {
     loadLogs();
-  }, [limit]);
+  }, [limit, severityFilter]);
 
   useEffect(() => {
     if (!autoRefresh) return;
     const interval = setInterval(loadLogs, 10000); // Refresh every 10 seconds
     return () => clearInterval(interval);
-  }, [autoRefresh, limit]);
+  }, [autoRefresh, limit, severityFilter]);
 
   async function loadLogs() {
     setLoading(true);
     setError("");
     try {
-      const res = await axios.get(`/api/admin/logs?limit=${limit}`);
+      const params = new URLSearchParams({ limit: limit.toString() });
+      if (severityFilter && severityFilter !== "ALL") {
+        params.append("severity", severityFilter);
+      }
+      const res = await axios.get(`/api/admin/logs?${params}`);
       if (res.data.success) {
         setLogs(res.data.logs || []);
       } else {
@@ -1135,8 +1140,8 @@ function LogsView() {
       <div style={s.sectionCard}>
         <div style={s.sectionHead}>
           <div>
-            <h3 style={s.sectionTitle}>System Activity Logs</h3>
-            <p style={s.sectionSub}>Backend application logs and deployment history</p>
+            <h3 style={s.sectionTitle}>User Activity Logs</h3>
+            <p style={s.sectionSub}>Real-time HTTP requests and system events from Railway</p>
           </div>
           <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
             <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "#cbd5e1" }}>
@@ -1148,6 +1153,16 @@ function LogsView() {
               />
               Auto-refresh (10s)
             </label>
+            <select
+              value={severityFilter}
+              onChange={(e) => setSeverityFilter(e.target.value)}
+              style={s.filterSelect}
+            >
+              <option value="ALL">All Severity</option>
+              <option value="INFO">Info Only</option>
+              <option value="WARN">Warnings</option>
+              <option value="ERROR">Errors Only</option>
+            </select>
             <select
               value={limit}
               onChange={(e) => setLimit(Number(e.target.value))}
@@ -1164,16 +1179,8 @@ function LogsView() {
           </div>
         </div>
 
-        <div style={{ ...s.alert, background: "rgba(56,189,248,0.12)", borderColor: "rgba(56,189,248,0.3)", color: "#7dd3fc", marginBottom: 16 }}>
-          ℹ️ For detailed Railway deployment logs, visit:{" "}
-          <a 
-            href="https://railway.app/project/068a348f-064a-4190-9d3a-17cd513270ab" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            style={{ color: "#38bdf8", textDecoration: "underline", fontWeight: 700 }}
-          >
-            Railway Dashboard
-          </a>
+        <div style={{ ...s.alert, background: "rgba(16,185,129,0.12)", borderColor: "rgba(16,185,129,0.3)", color: "#34d399", marginBottom: 16 }}>
+          ✅ Live activity logs - All user actions, API requests, and system events are captured here
         </div>
 
         {error && (
