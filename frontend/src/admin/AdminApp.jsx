@@ -18,6 +18,7 @@ const NAV = [
   { id: "revenue", label: "Revenue" },
   { id: "disputes", label: "Disputes" },
   { id: "transactions", label: "Transactions" },
+  { id: "logs", label: "Log Activities" },
 ];
 
 const fmt = (v, d = 2) => {
@@ -192,6 +193,7 @@ export default function AdminApp({ user, logout }) {
         {view === "revenue" && <RevenueView />}
         {view === "disputes" && <DisputesView showMsg={showMsg} />}
         {view === "transactions" && <TransactionsView />}
+        {view === "logs" && <LogsView />}
       </main>
     </div>
   );
@@ -1069,6 +1071,138 @@ function TransactionsView() {
   );
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// Log Activities view — Railway server logs
+// ═══════════════════════════════════════════════════════════════════════════
+
+function LogsView() {
+  const [logs, setLogs] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [limit, setLimit] = useState(100);
+  const [autoRefresh, setAutoRefresh] = useState(false);
+
+  useEffect(() => {
+    loadLogs();
+  }, [limit]);
+
+  useEffect(() => {
+    if (!autoRefresh) return;
+    const interval = setInterval(loadLogs, 10000); // Refresh every 10 seconds
+    return () => clearInterval(interval);
+  }, [autoRefresh, limit]);
+
+  async function loadLogs() {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await axios.get(`/api/admin/logs?limit=${limit}`);
+      if (res.data.success) {
+        setLogs(res.data.logs || []);
+      } else {
+        setError(res.data.message || "Failed to load logs");
+      }
+    } catch (err) {
+      setError(err?.response?.data?.message || "Unable to fetch logs");
+      setLogs([]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function getSeverityColor(severity) {
+    switch (severity?.toLowerCase()) {
+      case "error": return "#f87171";
+      case "warn": case "warning": return "#fbbf24";
+      case "info": return "#38bdf8";
+      case "debug": return "#a78bfa";
+      default: return "#94a3b8";
+    }
+  }
+
+  function getSeverityIcon(severity) {
+    switch (severity?.toLowerCase()) {
+      case "error": return "🔴";
+      case "warn": case "warning": return "🟡";
+      case "info": return "🔵";
+      case "debug": return "🟣";
+      default: return "⚪";
+    }
+  }
+
+  return (
+    <>
+      <div style={s.sectionCard}>
+        <div style={s.sectionHead}>
+          <div>
+            <h3 style={s.sectionTitle}>Railway Server Logs</h3>
+            <p style={s.sectionSub}>Live deployment logs from Railway platform</p>
+          </div>
+          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+            <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "#cbd5e1" }}>
+              <input
+                type="checkbox"
+                checked={autoRefresh}
+                onChange={(e) => setAutoRefresh(e.target.checked)}
+                style={{ cursor: "pointer" }}
+              />
+              Auto-refresh (10s)
+            </label>
+            <select
+              value={limit}
+              onChange={(e) => setLimit(Number(e.target.value))}
+              style={s.filterSelect}
+            >
+              <option value="50">50 logs</option>
+              <option value="100">100 logs</option>
+              <option value="200">200 logs</option>
+              <option value="500">500 logs</option>
+            </select>
+            <button onClick={loadLogs} style={s.btn} disabled={loading}>
+              {loading ? "Loading..." : "🔄 Refresh"}
+            </button>
+          </div>
+        </div>
+
+        {error && (
+          <div style={{ ...s.alert, background: "rgba(239,68,68,0.12)", borderColor: "rgba(248,113,113,0.3)", color: "#fca5a5" }}>
+            ⚠ {error}
+          </div>
+        )}
+
+        {loading && !logs.length ? (
+          <Loading label="Fetching logs..." />
+        ) : logs.length === 0 ? (
+          <Empty icon="📜" title="No logs available" text="No server logs found or Railway API not configured" />
+        ) : (
+          <>
+            <div style={s.logsContainer}>
+              {logs.map((log, idx) => (
+                <div key={idx} style={s.logEntry}>
+                  <div style={s.logHeader}>
+                    <span style={s.logIcon}>{getSeverityIcon(log.severity)}</span>
+                    <span style={{ ...s.logSeverity, color: getSeverityColor(log.severity) }}>
+                      {(log.severity || "INFO").toUpperCase()}
+                    </span>
+                    <span style={s.logTimestamp}>
+                      {new Date(log.timestamp).toLocaleString()}
+                    </span>
+                  </div>
+                  <pre style={s.logMessage}>{log.message}</pre>
+                </div>
+              ))}
+            </div>
+            <p style={s.tableFoot}>
+              {logs.length} log entr{logs.length === 1 ? "y" : "ies"} shown
+              {autoRefresh && " • Auto-refreshing every 10 seconds"}
+            </p>
+          </>
+        )}
+      </div>
+    </>
+  );
+}
+
 // ── Shared small components ─────────────────────────────────────────────────
 
 function Tile({ icon, label, value, sub, color }) {
@@ -1293,6 +1427,64 @@ const s = {
     justifyContent: "center",
   },
   tableFoot: { margin: "14px 2px 0", fontSize: 12, color: "#475569" },
+  logsContainer: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 12,
+    maxHeight: "600px",
+    overflowY: "auto",
+    padding: "12px",
+    background: "rgba(15,23,42,0.4)",
+    borderRadius: 12,
+    border: "1px solid rgba(148,163,184,0.08)",
+  },
+  logEntry: {
+    padding: "12px 14px",
+    borderRadius: 10,
+    background: "rgba(30,41,59,0.6)",
+    border: "1px solid rgba(148,163,184,0.1)",
+    display: "flex",
+    flexDirection: "column",
+    gap: 8,
+  },
+  logHeader: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    fontSize: 12,
+  },
+  logIcon: {
+    fontSize: 14,
+    flexShrink: 0,
+  },
+  logSeverity: {
+    fontWeight: 700,
+    fontSize: 11,
+    letterSpacing: 0.5,
+    flexShrink: 0,
+  },
+  logTimestamp: {
+    color: "#64748b",
+    fontSize: 11,
+    marginLeft: "auto",
+  },
+  logMessage: {
+    margin: 0,
+    padding: 0,
+    fontSize: 13,
+    lineHeight: 1.6,
+    color: "#cbd5e1",
+    fontFamily: "'Fira Code', 'Consolas', monospace",
+    whiteSpace: "pre-wrap",
+    wordBreak: "break-word",
+  },
+  alert: {
+    padding: "12px 16px",
+    borderRadius: 12,
+    border: "1px solid",
+    fontSize: 13,
+    marginBottom: 16,
+  },
   loadingRow: { display: "flex", gap: 12, alignItems: "center", color: "#64748b", padding: "24px 0" },
   spinner: { width: 18, height: 18, border: "2px solid rgba(251,191,36,0.2)", borderTopColor: "#fbbf24", borderRadius: "50%", animation: "spin 0.8s linear infinite", flexShrink: 0 },
   emptyState: { textAlign: "center", padding: "40px 24px", display: "grid", placeItems: "center", gap: 8 },

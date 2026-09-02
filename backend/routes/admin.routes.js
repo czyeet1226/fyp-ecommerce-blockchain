@@ -547,4 +547,86 @@ router.post("/escrow/resolve", async (req, res) => {
   }
 });
 
+// ── GET /api/admin/logs ─────────────────────────────────────────────────────
+//
+// Fetch Railway server logs for the admin console.
+// This endpoint acts as a proxy to Railway API to display deployment logs.
+//
+router.get("/logs", async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 100;
+    
+    // Railway credentials from environment
+    const railwayToken = process.env.RAILWAY_API_TOKEN;
+    const projectId = process.env.RAILWAY_PROJECT_ID || "068a348f-064a-4190-9d3a-17cd513270ab";
+    const serviceId = process.env.RAILWAY_SERVICE_ID || "14942b9c-b589-4367-bdc4-c60353a1d9e9";
+    const environmentId = process.env.RAILWAY_ENVIRONMENT_ID || "64a899d3-cee6-4000-b85f-1b1a9d6dbc12";
+
+    if (!railwayToken) {
+      return res.status(503).json({
+        success: false,
+        message: "Railway API token not configured. Add RAILWAY_API_TOKEN to .env file.",
+        logs: [],
+      });
+    }
+
+    // Fetch logs from Railway GraphQL API
+    const fetch = require("node-fetch");
+    const response = await fetch("https://backboard.railway.app/graphql/v2", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${railwayToken}`,
+      },
+      body: JSON.stringify({
+        query: `
+          query GetLogs($projectId: String!, $environmentId: String!, $serviceId: String!, $limit: Int!) {
+            deploymentLogs(
+              projectId: $projectId
+              environmentId: $environmentId
+              serviceId: $serviceId
+              limit: $limit
+            ) {
+              logs {
+                timestamp
+                message
+                severity
+              }
+            }
+          }
+        `,
+        variables: { projectId, environmentId, serviceId, limit },
+      }),
+    });
+
+    const data = await response.json();
+
+    if (data.errors) {
+      return res.status(500).json({
+        success: false,
+        message: "Failed to fetch Railway logs: " + data.errors[0].message,
+        logs: [],
+      });
+    }
+
+    const logs = data.data?.deploymentLogs?.logs || [];
+
+    return res.json({
+      success: true,
+      total: logs.length,
+      logs: logs.map((log) => ({
+        timestamp: log.timestamp,
+        message: log.message,
+        severity: log.severity || "info",
+      })),
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: `Unable to fetch logs: ${err.message}`,
+      logs: [],
+    });
+  }
+});
+
 module.exports = router;
