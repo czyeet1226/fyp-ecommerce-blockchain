@@ -126,7 +126,6 @@ export default function DashboardLayout({
                 onMouseEnter={() => setHovered(section.id)}
                 onMouseLeave={() => setHovered(null)}
               >
-                <span style={css.navIcon}>{section.icon}</span>
                 {section.label}
                 {section.id === "cart" && cartCount > 0 && (
                   <span style={navBadge}>{cartCount}</span>

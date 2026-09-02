@@ -1184,9 +1184,9 @@ function LogsView() {
             style={logStyles.filterSelect}
           >
             <option value="ALL">All Severity</option>
-            <option value="INFO">ℹ️ Info Only</option>
-            <option value="WARN">⚠️ Warnings</option>
-            <option value="ERROR">❌ Errors Only</option>
+            <option value="INFO">Info Only</option>
+            <option value="WARN">Warnings</option>
+            <option value="ERROR">Errors Only</option>
           </select>
 
           <select
