@@ -1,11 +1,11 @@
 export const SECTIONS = [
-  { id: "shop", label: "Shop", path: "/shop" },
-  { id: "cart", label: "Cart", path: "/cart" },
-  { id: "wallet", label: "Wallet", path: "/wallet" },
-  { id: "staking", label: "Staking", path: "/staking" },
-  { id: "track-order", label: "Track Order", path: "/track-order" },
-  { id: "history", label: "History", path: "/history" },
-  { id: "profile", label: "Profile", path: "/profile" },
+  { id: "shop", label: "Shop", path: "/shop", icon: "🛍️" },
+  { id: "cart", label: "Cart", path: "/cart", icon: "🛒" },
+  { id: "wallet", label: "Wallet", path: "/wallet", icon: "💳" },
+  { id: "staking", label: "Staking", path: "/staking", icon: "📈" },
+  { id: "track-order", label: "Track Order", path: "/track-order", icon: "📦" },
+  { id: "history", label: "History", path: "/history", icon: "📜" },
+  { id: "profile", label: "Profile", path: "/profile", icon: "👤" },
 ];
 
 export const SHOP_CATEGORIES = [
