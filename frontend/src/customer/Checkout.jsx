@@ -272,31 +272,6 @@ export default function Checkout({ basket, product, quantity = 1, onSuccess }) {
         </div>
       )}
 
-      {/* Wallet Balances */}
-      <div style={s.balanceRow}>
-        <div style={s.balanceChip}>
-          <span style={s.balanceIcon}>⟠</span>
-          <div>
-            <p style={s.balanceLabel}>ETH</p>
-            <p style={s.balanceAmount}>{ethBalance.toFixed(4)}</p>
-          </div>
-        </div>
-        <div style={s.balanceChip}>
-          <span style={s.balanceIcon}>✦</span>
-          <div>
-            <p style={s.balanceLabel}>Elixir</p>
-            <p style={s.balanceAmount}>{elixirBalance.toLocaleString()}</p>
-          </div>
-        </div>
-        <div style={s.balanceChip}>
-          <span style={s.balanceIcon}>RM</span>
-          <div>
-            <p style={s.balanceLabel}>RM value</p>
-            <p style={s.balanceAmount}>{rmBalance.toFixed(2)}</p>
-          </div>
-        </div>
-      </div>
-
       {/* Payment Mode Selector */}
       <p style={s.sectionLabel}>Choose Payment Method</p>
       <div style={s.modeGrid}>
